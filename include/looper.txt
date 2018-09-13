@@ -1,0 +1,242 @@
+#define LOOPER#
+;p4 looper number, 1 or 2 or ..
+;p5 init time
+
+
+
+Sol_in sprintf  "ol_in%d", p4
+chnset 0, Sol_in
+
+Sol_ti sprintf  "ol_ti%d", p4
+chnset p5, Sol_ti
+kol_ti chnget Sol_ti
+
+Sol_re sprintf  "ol_re%d", p4
+chnset 1.0, Sol_re
+
+Sol_repamp sprintf  "repamp%d", p4
+chnset 0, Sol_repamp
+
+Sspeed sprintf  "speedloop%d", p4
+chnset 1, Sspeed
+kspeed chnget Sspeed
+
+Slink sprintf  "linkp%d", p4
+chnset 1, Slink
+klinkpoin chnget Slink
+
+Sreset sprintf  "resetp%d", p4
+chnset 0, Sreset
+kreset_ chnget Sreset
+if changed(kreset_)==1 && kreset_==1 then
+    kreset = 1
+else
+    kreset = 0
+endif
+
+
+;Speed modulation
+;amp
+Smodulamp sprintf  "ol_ma%d", p4
+chnset 0, Smodulamp
+
+;freq
+Smodulfreq sprintf  "ol_mf%d", p4
+chnset 0, Smodulfreq
+
+;offset
+Smoduloffset sprintf  "ol_mo%d", p4
+chnset 0, Smoduloffset
+
+;Shape
+Smodshape sprintf  "modshape%d", p4
+chnset 0, Smodshape
+
+;mod polarity
+Smodpolar sprintf  "modpolar%d", p4
+chnset 1, Smodpolar
+
+;thresold
+Sautothr sprintf  "autothr%d", p4
+
+;Looper function
+kcurrtimeon init 1
+kcurrtimeoff init 1
+Srec sprintf  "looprec%d", p4 
+chnset 0, Srec
+
+krec_status init 0;is in rec (1) or not (0)
+Srecstatus sprintf  "recstatus%d", p4
+
+;mode
+Sautomode sprintf  "autothrmode%d", p4
+kactiv_mode chnget Sautomode
+ktime times
+kstarttime init 0
+kactiv_mode init 0
+
+
+
+/* kactiv_mode for recording
+0 off
+1 button start button stop
+2 button start auto stop
+3 thresold start button stop
+4 thresold start auto stop
+*/
+krec chnget Srec
+krec init 0
+chnset 1, Sautothr
+ktreshv chnget Sautothr
+ktreshv init 1
+
+;kmax rms ainL + ainR
+;kinL downsamp ainL
+;kinR downsamp ainR
+;kinL = abs(kinL)
+;kinR = abs(kinR)
+
+kinL max_k ainL, 1, 1
+kinR max_k ainR, 1, 1
+kmax = (kinL > kinR ?  kinL : kinR)
+ktrigon trigger kmax,  ktreshv, 0
+ktrigon init 0
+;printk2 ktrigon
+
+
+if (kactiv_mode == 1) then; manual 
+    if krec ==1  && changed(krec) == 1 then
+        if krec_status == 1 then; is recording
+            krec_status = 0
+        else
+            krec_status = 1
+        endif
+    endif
+elseif kactiv_mode == 2  then
+    if krec_status == 0 then; is playing
+           if krec ==1  && changed(krec) == 1 then
+               krec_status = 1
+           endif
+    else
+         if krec_status == 1 then;
+               if kol_ti <= ktime - kstarttime then
+                    krec_status = 0
+               endif
+         endif
+    endif
+elseif kactiv_mode == 3  then
+    if krec_status == 1 then; is recording
+        if krec == 1  && changed(krec) == 1 then
+            krec_status = 0
+        endif
+    else
+        if krec_status == 0 &&  ktrigon == 1 then; is recording
+               krec_status = 1
+        endif
+    endif
+elseif kactiv_mode == 4  then
+    if krec_status == 1 then; is recording
+         if krec_status == 1 then;
+               if kol_ti <= ktime - kstarttime then
+                    krec_status = 0
+               endif
+         endif
+    else
+        if krec_status == 0 &&  ktrigon == 1 then; is recording
+               krec_status = 1
+        endif	
+    endif
+endif
+
+
+
+if krec_status == 1 && changed(krec_status) == 1 then ;recording on
+              chnset k(1), Sautothr;set threshold to max to avoid retrigger
+              ktreshv = 1
+	kstarttime = ktime
+	kreset = 1 ;reset pointer to 0
+              if (kactiv_mode == 1) || (kactiv_mode == 3) then; manual stop
+                  kol_ti = 120 ;set ktime to max
+                  chnset kol_ti, Sol_ti
+              endif
+             chnset krec_status, Srecstatus
+elseif krec_status == 0 && changed(krec_status) == 1 then ;recording off
+              chnset k(1), Sautothr;set threshold to max to avoid retrigger
+              ktreshv = 1
+	kreset = 1;reset pointer to 0
+             if (kactiv_mode == 1) || (kactiv_mode == 3) then; manual stop
+	    kol_ti = ktime - kstarttime;set ktime = elapsed time since first click
+	    chnset kol_ti, Sol_ti
+            endif
+            chnset krec_status, Srecstatus
+endif
+
+
+
+;printk2 kol_ti_
+
+
+
+if krec_status == 1 then
+              kol_in_ = 1
+              kol_re = 0 ;set repeats to 0, delete old data
+              kspeed_mod = 0
+else
+              kol_in_ chnget Sol_in
+              kol_re_ chnget Sol_re
+              kol_repamp chnget Sol_repamp
+              kol_re port kol_re_+ kol_repamp, giport
+	;modulator
+	kmod_amp_ chnget Smodulamp;0<>1
+	kmod_amp = kmod_amp_ * kmod_amp_ * 5
+	kmod_freq_ chnget Smodulfreq;0<>1
+	kmod_freq = kmod_freq_ * kmod_freq_ * kmod_freq_ * 15
+              ;modulatore amplitude
+              kmod_polar chnget Smodpolar
+	kmod_offset_ chnget Smoduloffset;0 <> 1: 0 negative only ,0.5 bipolar, 1 positive only
+              if kmod_polar == 1 then
+                 kmod_offset = kmod_offset_
+              elseif kmod_polar == 2 then
+                  kmod_offset = (kmod_offset_ - 0.5) * 2;-1 <> 1: -1 negative only ,0bipolar, 1 positive only
+              else
+                  kmod_offset = -1 * kmod_offset_
+              endif
+	;speed modulator
+              kshape chnget Smodshape;
+              if kshape == 0 then
+                  kspeed_mod = 0
+              elseif kshape == 1 then
+	    kspeed_mod oscil kmod_amp, kmod_freq, giSine
+                  kspeed_mod = kspeed_mod + kmod_offset * kmod_amp
+              elseif kshape == 2 then
+                  kspeed_mod oscil kmod_amp, kmod_freq, giTriangle
+                  kspeed_mod = kspeed_mod + kmod_offset * kmod_amp
+              else
+                  kspeed_mod oscil kmod_amp, kmod_freq, giSquare
+                  kspeed_mod = kspeed_mod + kmod_offset * kmod_amp
+              endif
+	
+endif
+
+
+;printk2 ktreshv
+
+;table based looper
+kol_in port kol_in_, giport
+aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kol_re, kspeed + kspeed_mod, kreset, gimaxDlyTime
+
+;output
+Smute sprintf  "mute%d", p4 
+chnset 0, Smute
+kmute chnget Smute
+kmute_status init 1;is in play (1) or not (0)
+kmute_status = ( kmute == 1 && changed(kmute) == 1 ? (kmute_status + 1) % 2 :  kmute_status )
+kmuted port kmute_status, giport
+
+;audio output
+;outputs for direct, matrix, looper1, looper2 in instr 1004
+islotL = (p4 - 1) * 2 + 4
+islotR = (p4 - 1) * 2 + 5
+gaoutMix[islotL] = aoutL * kmuted * kenvdecl;adel1l
+gaoutMix[islotR] = aoutR * kmuted * kenvdecl;adel1r
+#

@@ -1,0 +1,7 @@
+
+opcode CosSinMix, a, aak
+ain1, ain2, kmix xin
+aout = ain1 * cos(kmix * $M_PI_2) + ain2 * sin(kmix * $M_PI_2)
+xout aout
+endop
+

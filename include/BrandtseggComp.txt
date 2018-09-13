@@ -1,0 +1,18 @@
+
+opcode BrandtseggComp, a, akkk
+ain, kingain, kthresh, kratio xin
+;kingain = kpar1 * kpar1 * 4
+;kthresh = in -db
+;kratio minimum 1 to inf, <1 expand
+krms1        rms ain * kingain                       ; analyze amplitude of input signal 
+krms_dB1    = dbfsamp(krms1)                    ; convert to dB scale 
+kovershoot1    = kthresh - krms_dB1                    ; how much over the threshold are we? 
+ktarget1    = kthresh - (kovershoot1*(1/kratio))            ;target output level (with current input level, threshold and ratio) 
+kampMod_dB1    =  ktarget1 - krms_dB1                    ;difference from target = adjust amount 
+kampMod_dB1    limit kampMod_dB1, -150, 0                ; do not adjust unless negative 
+kampMod1    = ampdbfs(kampMod_dB1)                    ; convert back to normalized scale 
+aout        = ain*kampMod1                        ; apply amplitude modification 
+
+xout aout
+endop
+

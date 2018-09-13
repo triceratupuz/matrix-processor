@@ -1,0 +1,9 @@
+
+
+opcode AtanLimit, a, a
+ain xin
+aout = 2 * taninv(ain) / 3.1415927
+xout aout
+endop
+
+

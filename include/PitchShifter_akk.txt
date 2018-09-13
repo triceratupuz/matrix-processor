@@ -1,0 +1,39 @@
+;Delay based pitch shifter
+;Semitones control as kontrol signal
+opcode PitchShifter_akk, a, akki
+;setksmps 10
+ain, ksemitones, kquality, ihalfsine xin
+;ksemitones number of semitones of trasposition
+;kquality quality of the output - adds delay - from 0 to infinity
+	imaxdlt init 2
+	kdlt = .01 + .1 * kquality
+	;ihalfsine	ftgen	0, 0, 2049, 9, 0.5, 1, 0	;HALF SINE  WINDOW FUNCTION USED FOR AMPLITUDE ENVELOPING
+
+	koctfract	=	ksemitones/12			;TRANSPOSITION AS FRACTION OF AN OCTAVE
+	kratio		=	octave(koctfract)		;RATIO TO PRODUCE PITCH SHIFT
+	krate		=	(kratio-1)/kdlt 			;SUBTRACT 1/1 SPEED
+
+	aphase1		phasor	-krate				;MOVING PHASE 1-0
+	aphase2		phasor	-krate, .5			;MOVING PHASE 1-0 - PHASE OFFSET BY 180 DEGREES (.5 RADIANS)
+
+	;What if ihalfine table dimension is increased?
+	agate1		tablei	aphase1, ihalfsine, 1, 0, 1	;WINDOW FUNC =HALF SINE
+	agate2		tablei	aphase2, ihalfsine, 1, 0, 1	;WINDOW FUNC =HALF SINE
+
+	adlt		interp	kdlt				;CREATE A RATE (INTERPOLATED FROM K-RATE) VERSION OF kdlt
+	aout		init	0				;INITIALISE OUTPUT AUDIO SIGNAL (NEEDED FOR FEEDBACK SIGNAL (METHOD 2))
+
+	abuffer		delayr	imaxdlt				;DECLARE DELAY BUFFER
+	adelsig1	deltap3	aphase1 * adlt			;VARIABLE TAP
+	aGatedSig1	=	adelsig1 * agate1
+			delayw	ain
+
+	abuffer		delayr	imaxdlt				;DECLARE DELAY BUFFER
+	adelsig2	deltap3	aphase2 * adlt			;VARIABLE TAP
+	aGatedSig2	=	adelsig2 * agate2
+			delayw	ain
+
+	aout	dcblock2	(aGatedSig1 + aGatedSig2) * 0.5
+
+	xout aout
+endop

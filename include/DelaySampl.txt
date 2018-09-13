@@ -1,0 +1,47 @@
+
+
+
+opcode DelaySampl, aa, aakkkkki
+ainL, ainR, kinvol, ktime, kfeedback, kspeed, kreset, imaxtime  xin
+;setksmps 1
+;basic buffer with feedback, no time modulation
+;inputs
+;ainL, ainR
+;controls
+;kinvol; input volume
+;ktime;loop time in seconds
+;kfeedback; feedback 
+;kspeed lontre kspeed multiplicator
+;kreset - reset pointer to buffer start
+;constants 
+;imaxtime; maximum time of the buffer in seconds
+;buffers / memory
+ibufL ftgentmp 0, 0, sr * imaxtime, 2, 0
+ibufR ftgentmp 0, 0, sr * imaxtime, 2, 0
+
+
+;resetting pointer
+if kreset == 1 && changed(kreset) == 1 then
+	asyncin = 1
+else
+	asyncin = 0
+endif
+
+;/resetting pointer
+;buffer indexing
+aphase, asyncout syncphasor kspeed / ktime, asyncin
+apointw = aphase * ktime * sr
+;/buffer indexing
+
+
+;buffer reading -> writing
+afrom_ibufL tablei apointw, ibufL
+afrom_ibufR tablei apointw, ibufR
+;writing
+tablew afrom_ibufL * kfeedback + ainL * kinvol, apointw, ibufL
+tablew afrom_ibufR * kfeedback + ainR * kinvol, apointw, ibufR
+;/buffer reading -> writing
+
+xout afrom_ibufL * kfeedback, afrom_ibufR * kfeedback
+endop
+

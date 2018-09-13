@@ -1,0 +1,85 @@
+
+#define EFFSELECT(N) #
+ieffind = 8 + ($N -1) * 16
+ieffbeg$N tab_i ieffind, p5+5
+iinprev$N = 100.1 + 0.1 * p5 +  0.01 * $N + ieffbeg$N 
+event_i "i", iinprev$N , 0, -1, $N, p5, i(gktailtime)
+
+keffprev$N init ieffbeg$N
+kinprev$N init iinprev$N
+
+kind$N init ieffind
+keff$N tab kind$N, p5+5
+
+if changed(keff$N) == 1 && keff$N != keffprev$N then
+  kinnew$N = 100.1 + 0.1 * p5 +  0.01 * $N + keff$N
+  event "i", kinnew$N, giport, -1, $N, p5, gktailtime
+  event "i", -1 * kinprev$N, giport, -1, $N, p5, gktailtime
+  keffprev$N = keff$N
+  kinprev$N = kinnew$N
+endif
+;kindcurinst$N init p5 * 8 + $N
+;tablew kinprev$N, kindcurinst$N, gicurinstr
+#
+
+
+#define INMIXT(N) #
+;0-15
+irelease = p6
+kcol init (p4 -1) * 16
+kdir_ tab kcol, 5 + p5
+kch1_ tab kcol+1, 5 + p5
+kch2_ tab kcol+2, 5 + p5
+kch3_ tab kcol+3, 5 + p5
+kch4_ tab kcol+4, 5 + p5
+kch5_ tab kcol+5, 5 + p5
+kch6_ tab kcol+6, 5 + p5
+kch7_ tab kcol+7, 5 + p5 
+
+kdir port kdir_ * kdir_ * 4,  giport
+kch1 port kch1_ * kch1_ * 4,  giport
+kch2 port kch2_ * kch2_ * 4,  giport
+kch3 port kch3_ * kch3_ * 4,  giport
+kch4 port kch4_ * kch4_ * 4,  giport
+kch5 port kch5_ * kch5_ * 4,  giport
+kch6 port kch6_ * kch6_ * 4,  giport
+kch7 port kch7_ * kch7_ * 4,  giport
+
+kenv linsegr 0, giport, 1, giport, 0
+kenvr linsegr 0, giport, 1, giport + irelease, 0
+
+ain AtanLimit kenv * (ga_in[p5][0] * kdir) + kenvr * (ga_in[p5][1] * kch1 + ga_in[p5][2] * kch2 + ga_in[p5][3] * kch3 + ga_in[p5][4] * kch4 + ga_in[p5][5] * kch5 + ga_in[p5][6] * kch6 + ga_in[p5][7] * kch7)
+#
+
+#define OUTMIXT #
+kouv_ tab kcol+14, 5+p5 
+kouv port kouv_ * kouv_ * 4, giport
+;ga_out[p5][p4] AtanLimit kenvr * aout
+ga_out[p5][p4] = kenvr * aout
+#
+
+#define PARAMT(N) #
+kparind_$N init (p4 -1) * 16 + 8 +$N
+;kpar_$N tab kcol+8+$N, 5+p5
+kpar_$N tab kparind_$N, 5+p5
+;printk2 kpar_$N
+kpar$N port kpar_$N, giport
+#
+
+#define FEEDINT(N) #
+indmatv$N init 16 * ($N -1) + 14
+kmatv_$N tab k(indmatv$N), 5 + p5
+kmatv$N port kmatv_$N * kmatv_$N * kmatv_$N * 8, giport
+ga_in[p5][$N] = ga_out[p5][$N] * kmatv$N
+#
+
+#define OUTLINET(N) #
+ipindpan$N init 16 * ($N -1) + 13
+ipindvol$N init 16 * ($N-1) + 15
+kpan_$N tab k(ipindpan$N), 5 + p5
+kvol_$N tab k(ipindvol$N), 5 + p5
+kpan$N port kpan_$N, giport
+kvol$N port kvol_$N * kvol_$N * kvol_$N * 8, giport
+al$N, ar$N pan2 ga_out[p5][$N] * kvol$N, kpan$N
+#
+
