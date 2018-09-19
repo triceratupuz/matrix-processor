@@ -25,33 +25,25 @@ body {
 	background-color: FFFFFF;
 	font-size:19px;
 	font-family: Sans-serif;
-	}
+}
 
 h1 {
 	color: #000000;
 	font-size:1.1em;
               width: 100%;
-	}
+}
 
 label {
 	color: #000000;
 	font-weight: bold;
 	font-size:1.05em;
-	}
-
-table {
-	font-size:1em;
-	border-width:20em;
-	}
-
+}
 
 .mixer {
             column-count:7;
 }
 
-
 .header {
-          //float:bottom;
           padding-top: 0.5%;
           padding-bottom: 0.5%;
           padding-left: 0.5%;
@@ -59,16 +51,8 @@ table {
           border-style:solid;
           border-width: 1px;
           border-color:#000000;
-          }
-
-.header {
           column-count:4;
-           }
-
-.footer {
-          //column-count:3;
-           }
-
+}
 
 .time {
           //margin:0.5%;
@@ -77,25 +61,20 @@ table {
 }
 
 .loopthr {
-          //margin:0.5%;
          width:9%;
          float:left;
 }
 
 .timew {
-          //margin:0.5%;
-         //width:23%;
          float:left;
 }
 
 .timetop {
-          //margin:0.5%;
          width:50%;
          float:left;
 }
 
 .mixeritem {
-          //margin:0.5%;
          width:10%;
          float:left;
 }
@@ -105,13 +84,11 @@ table {
     column-count:4;
 }
 
-
 input[type=checkbox] {
 	font-size:0.8em;
 	padding: 0.5em;
 	border: 0;
 }
-
 
 input[type=button] {
                width:45%;
@@ -122,8 +99,6 @@ input[type=button] {
               border-color:#000000;
 	background-color: #bbbbbb;
 }
-
-
 
 input[type=range] {
 	-webkit-appearance: none;
@@ -145,9 +120,7 @@ input[type=range].vertical {
 	width:30%;
 	vertical-alig:middle;
               horizontal-alig:middle;
-              //padding:5px;
 }
-
 
 input[type=range].vertical2 {
 	/*vertical slider*/
@@ -156,19 +129,6 @@ input[type=range].vertical2 {
 	box-shadow: inset 0 0 5px #555;
 	backgroud-color: #999;
 	height:8%;
-	width:5%;
-	vertical-alig:middle;
-              horizontal-alig:middle;
-              //padding:5px;
-}
-
-input[type=range].verticalhead {
-	/*vertical slider*/
-	-webkit-appearance: slider-vertical;
-	border-radius:8px;
-	box-shadow: inset 0 0 5px #555;
-	backgroud-color: #999;
-	height:5em;
 	width:5%;
 	vertical-alig:middle;
               horizontal-alig:middle;
@@ -238,8 +198,6 @@ input[type=button].footdh {
 
 </style>
 
-
-
 <script type="text/javascript">
 
 //CONFIGURATION-----------------------------------------------------------------------------------
@@ -279,7 +237,6 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [51, "freq shift", "freq", "gain", "dry-wet", ""],
     [52, "pseudo grain", "rate", "dlyratio", "feedback", "dry-wet"],
     [53, "resonator", "frequency", "cutoff", "feedback", "dry-wet"],
-    [54, "synth", "portamento", "attack", "decay", "pitch"],
     [55, "harmonizer", "tonality", "interval", "octave", ""]
 ];
 
@@ -305,6 +262,18 @@ var pclowfreezers = 105;//first freezer PC
 var freezersqty = 3;
 
 var pctaptempo = 127;//tap tempo PC
+
+//output mixer
+//id slider, id vumeter, name displayed, midi cc
+var mixerdefs = [["mix_ma", "matrixoutv", "Matrix", 100],
+                              ["mix_f1",  "freeze1outv", "Freeze1", 101],
+                              ["mix_f2",  "freeze2outv", "Freeze2", 102],
+                              ["mix_f3",  "freeze3outv", "Freeze3", 103],
+                              ["mix_l1",  "loop1outv", "Loop1", 104],
+                              ["mix_l2",  "loop2outv", "Loop2", 105],
+                              ["mix_l3",  "loop3outv", "Loop3", 106],
+                              ["mix_l4",  "loop4outv", "Loop4", 107]]
+
 
 var leak = 0;//leak tails between programs
 csoundApp.setControlChannel("leak", 0);
@@ -418,10 +387,14 @@ function loaderMidi(message) {
                 midiCCdispatch(receivedcc, data[2]);
             }
         }
+        //mixer Cc
+         for (var receivedcc = 0; receivedcc < mixerdefs.length; receivedcc++){
+            if (data[1] == mixerdefs[receivedcc][3]){
+                midiCCdispatchsimple(mixerdefs[receivedcc][0], data[2]);
+            }
+        }
     }
 }
-
-
 
 
 //midi control ----------------------------------------------------------------------------------------
@@ -465,7 +438,7 @@ function writeToMidiLog(where, what) {
 //midi control  Gui----------------------------------------------------------------------------------------
 
 
-//create a list of channels to be retrived by index
+//create a list of channels to be retrived by index for midi cc
 var cc_cha_def =[];
 
 function createCcChannelNumber(){
@@ -542,7 +515,15 @@ function midiCCdispatch(midiCcGuiN, value){
     //update gui
     var el = document.getElementById(channel);
     el.value = val;
+}
 
+function midiCCdispatchsimple(id, value){
+    //send value to cc control channel
+    var val = value / 127.0;
+    csoundApp.setControlChannel(id, val);
+    //update gui
+    var el = document.getElementById(id);
+    el.value = val;
 }
 
 
@@ -1135,8 +1116,15 @@ createGuiControllerCC(4);
 fixed midi mapping<br>
 PC 0 - 99 : matrix preset 0 to 99<br>
 PC <script>document.write(pclowloopers + " - " + (pclowloopers + loopersqty -1));</script> : start/stop loopers<br>
-PC <script>document.write(pclowfreezers + " - " + (pclowfreezers + freezersqty -1));</script> : start/stop loopers<br>
+PC <script>document.write(pclowfreezers + " - " + (pclowfreezers + freezersqty -1));</script> : start/stop freezers<br>
 PC <script>document.write(pctaptempo);</script> : tap tempo<br>
+<br><br>
+Output mixer<br>
+<script>
+for (var fixcc = 0; fixcc < mixerdefs.length; fixcc++){
+    document.write('CC '+ mixerdefs[fixcc][3] + ' : ' + mixerdefs[fixcc][2] + '<br>');
+}
+</script>
 <br><br>
 Incoming midi messagess:
 <div id="log_in">log here</div>
@@ -1145,36 +1133,37 @@ Incoming midi messagess:
 
 
 
-<div id="loopers" class ="footer">
+<div id="loopers">
 <br>
 <script>
 for (lop =1; lop <= loopersqty; lop++) {
+
     document.write('<div class="timew">');
-    document.write('<h1>Loop' + lop + '</h1>');
+    document.write('<h1>L<br>o<br>o<br>p<br>' + lop + '</h1>');
     document.write('</div>');
+
     document.write('<div class="loopthr">');
-
-    
-    document.write('<select id="looperInput' + lop + '" onchange="changeDlyInput(id, value)">');//function to be written
-    document.write('                                      <option value="0">matrix</option>');
-    for (lopc =1; lopc < lop; lopc++) {
-        document.write('                                      <option value="'+ lopc + '">loop' + lopc +'</option>');
-    }
-    document.write('</select><br>');
-
-    document.write('<select id="autothrmode' + lop + '" onchange="changeDlyMode(id, value)">');//function to be written
+    document.write('<select id="autothrmode' + lop + '" onchange="changeDlyMode(id, value)">');
     document.write('                                      <option value="0">OFF</option>');
     document.write('                                      <option value="1">man</option>');
     document.write('                                      <option value="2">autoend</option>');
     document.write('                                      <option value="3">thrStart</option>');
     document.write('                                      <option value="4">thrStartautoend</option>');
     document.write('</select><br>');
-    document.write('Thr  <input type="range" class="vertical2" min=0 max=1 value=1 step=0.001 id="autothr' +lop+ '" oninput="sliderDo(id, value)">');
+    document.write('Thr  <input type="range" class="vertical2" min=0 max=1 value=1 step=0.001 id="autothr' +lop+ '" oninput="sliderDo(id, value)"><br>');
     document.write('</div>');
+
     document.write('<div class="time">');
     document.write('<input type="button" class= "footdh" value="Play" id="looprec' + lop + '" onclick="loopPlayRec(id)">');
     document.write('<input type="button" class= "foothw" value="P 0" id="resetp' + lop+ '" onclick="activator(id)">');
     document.write('<input type="button" class= "foothw" value="Mute" id="mute' + lop+ '" onclick="loopMuter(id)">');
+    //matrix input
+    document.write('<select id="looperInput' + lop + '" onchange="changeDlyInput(id, value)">');//function to be written
+    document.write('                                      <option value="0">from matrix</option>');
+    for (lopc =1; lopc < lop; lopc++) {
+        document.write('                                      <option value="'+ lopc + '">from loop' + lopc +'</option>');
+    }
+    document.write('</select><br>');
     document.write('</div>');
 
     document.write('<div class="time">');
@@ -1182,9 +1171,7 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('                                      <option value="0">sec</option>');
     document.write('                                      <option value="1">beat</option>');
     document.write('</select><br>');
-
     document.write('<input type="number" class="foot" min=0 max=60 value=1.000 step=0.001 id="ol_ti' + lop + '" onchange="delayLimit(id, value' + ", 'outtimeum" + lop + "')"+ '">');
-
     document.write('<select class= "foot" id="speedloop'+lop+'" onchange="selectDo(id)">');
     document.write('                                      <option value="0.25">1/4</option>');
     document.write('                                      <option value="0.3333333333">1/3</option>');
@@ -1198,8 +1185,10 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('                                      <option value="-1">-1</option>');
     document.write('                                      <option value="-2">-2</option>');
     document.write('                                      <option value="-3">-3</option>');
-    document.write('</select>');
-    document.write('</div><div class="time">');
+    document.write('</select><br>');
+    document.write('</div>');
+
+    document.write('<div class="time">');
     document.write('<select id="repamp'+lop+'" class= "foot" onchange="selectDo(id)">');
     document.write('                                      <option value="0" selected>reduce</option>');
     document.write('                                      <option value="1">amplify</option>');
@@ -1213,7 +1202,6 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('                                      <option value="2">tri</option>');
     document.write('                                      <option value="3">squ</option>');
     document.write('</select>');
-
     document.write('<select id="modpolar'+lop+'" class= "foothalf" onchange="selectDo(id)">');
     document.write('                                      <option value="1" selected>pos</option>');
     document.write('                                      <option value="2">bi</option>');
@@ -1225,11 +1213,17 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('Off  <input type="range" class="vertical2" min=0 max=1 value=0 step=0.001 id="ol_mo' +lop+ '" oninput="sliderDo(id, value)">');
     document.write("</div>");
 
-    document.write('<div style="clear:both;">');
+
+
+     document.write('<div  style="float:left;width:9%;font-size:0.6em;">');
+     document.write("to<br>matrix<br>");
+    document.write('<input type="range" class="vertical2" min=0 max=1 value=0 step=0.001 id="loop_in_ma' +lop+ '" oninput="sliderDo(id, value)">');
+     document.write('</div>');
+
+    document.write('<div style="clear:both;"></div>');
     document.write('<br>');
 }
 
-//document.write("</div>");
 </script>
 
 <div style="clear:both;"></div>
@@ -1268,23 +1262,19 @@ for (var frezz = 0; frezz < freezersqty; frezz++) {
 <h1 id="totaloutv">Mixer</h1>
 <div class="mixeritem">
     <input type="range" class="vertical2" min=0 max=1 value=0 step=0.001 id="mix_in" oninput="sliderDo(id, value)"><br>Direct
-</div><div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="mix_ma" oninput="sliderDo(id, value)"><br><span id="matrixoutv">Matrix</span>
-</div><div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="mix_f1" oninput="sliderDo(id, value)"><br><span id="freeze1outv">Freeze1</span>
-</div><div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="mix_f2" oninput="sliderDo(id, value)"><br><span id="freeze2outv">Freeze2</span>
-</div><div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="mix_f3" oninput="sliderDo(id, value)"><br><span id="freeze3outv">Freeze3</span>
-</div><div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="mix_l1" oninput="sliderDo(id, value)"><br><span id="loop1outv">Loop1</span>
-</div><div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="mix_l2" oninput="sliderDo(id, value)"><br><span id="loop2outv">Loop2</span>
-</div><div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="mix_l3" oninput="sliderDo(id, value)"><br><span id="loop3outv">Loop3</span>
-</div><div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="mix_l4" oninput="sliderDo(id, value)"><br><span id="loop4outv">Loop4</span>
 </div>
+
+<script>
+//output mixer
+for (var mixcount = 0; mixcount < mixerdefs.length; mixcount++) {
+    document.write('<div class="mixeritem">'+ 
+        '<input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="'+
+         mixerdefs[mixcount][0] + 
+         '" oninput="sliderDo(id, value)"><br><span id="' + 
+        mixerdefs[mixcount][1] + '">' + mixerdefs[mixcount][2] + '</span></div>');
+}
+</script>
+
 </div>
 
 
@@ -1685,16 +1675,17 @@ endin
 
 
 instr 90; audio input
+galoop_in_ma init 0
 ain inch 1
 ;write to array
-ga_in[0][0] = ain; + galeak
-ga_in[1][0] = ain; + galeak
-ga_in[2][0] = ain; + galeak
-ga_in[3][0] = ain; + galeak
-ga_in[4][0] = ain; + galeak
-ga_in[5][0] = ain; + galeak
-ga_in[6][0] = ain; + galeak
-ga_in[7][0] = ain; + galeak
+ga_in[0][0] = ain + galoop_in_ma
+ga_in[1][0] = ain + galoop_in_ma
+ga_in[2][0] = ain + galoop_in_ma
+ga_in[3][0] = ain + galoop_in_ma
+ga_in[4][0] = ain + galoop_in_ma
+ga_in[5][0] = ain + galoop_in_ma
+ga_in[6][0] = ain + galoop_in_ma
+ga_in[7][0] = ain + galoop_in_ma
 ;write to output mixer
 gaoutMix[0] = ain
 gaoutMix[1] = ain
@@ -1702,6 +1693,8 @@ gaoutMix[1] = ain
 ga_in[gkchainleak][0] = ga_in[gkchainleak][0]  + galeak
 ;reset leakage
 galeak = 0
+;reset audio from loopers
+galoop_in_ma = 0
 endin
 
 
@@ -1782,7 +1775,9 @@ instr 106;powershaper
 $INMIXT
 $PARAMT(1)
 kshapeamt = kpar1 * kpar1 * kpar1 * kpar1 * kpar1 * 32
-aout powershape ain, kshapeamt
+alimin AtanLimit ain
+ashap powershape alimin, kshapeamt
+aout AtanLimit ashap
 $OUTMIXT
 endin
 
@@ -2033,8 +2028,8 @@ $PARAMT(4)
 
 ares = ain
 kcrossover = 20+ kpar1 * kpar1 * 8000
-kfreqL = kpar2 * kpar2 * 500
-kfreqH = kpar3 * kpar3 * 500
+kfreqL = kpar2 * kpar2 * kpar2 * 80
+kfreqH = kpar3 * kpar3 * kpar2 * 80
 kDopDep= kpar4 * 2
 iMaxDelay = 4
 
@@ -2353,50 +2348,6 @@ endin
 
 
 
-instr 154; thereminizer
-$INMIXT
-;pitch port
-$PARAMT(1)
-;attack
-$PARAMT(2)
-;decay
-$PARAMT(3)
-;pitch
-$PARAMT(4)
-
-kpor = kpar1 * 0.5
-katt = kpar2 *2
-kdec = kpar3 *2
-kpitch = (kpar4 - 0.5) * 24;+-12
-
-;pitch tracking
-kd init 0.39;range 0-1
-acps, alock plltrack ain, kd 
-kcps downsamp acps
-kcps_p portk kcps, kpor
-
-;Amplitude tracking
-aamp follow2 ain, katt, kdec
-kamp_p downsamp aamp
-
-;synth
-afix oscili kamp_p, sr/3, giSine
-amodul oscili kamp_p, sr/3 - kcps_p * semitone(kpitch), giSine
-amix butlp afix * amodul, sr / 6
-amix butlp amix, sr / 6
-amix buthp amix, 25
-
-;distort
-kpregain = 0.7 + 0.4 * kamp_p
-kpostgain init 100
-kshape1 = 0.2 + 0.75 * (1000 - kcps_p) / 1000;positive part
-kshape2 = 0.8 + 0.15 * (1000 - kcps_p) / 1000;negative part
-aout distort1 amix, kpregain, kpostgain, kshape1, kshape2
-
-$OUTMIXT
-endin
-
-
 
 instr 155; harmonizer
 $INMIXT
@@ -2412,8 +2363,16 @@ iintevals ftgentmp 0, 0, 8, -2, 0, 2, 4, 5, 7, 9, 11;semitones to major
 kinterval_m tab int(kpar2 * 6.1), iintevals
 
 ;octave
-ksemit = int((kpar3 - 0.5) * 48)
-koctave = semitone(ksemit)
+koctave init 1
+if kpar3 < 0.25 then
+    koctave = 0.25
+elseif kpar3 >= 0.25 && kpar3 < 0.5 then
+    koctave = 0.5
+elseif kpar3 >= 0.5 && kpar3 < 0.75 then
+    koctave = 1
+else
+    koctave = 2
+endif
 
 iscala ftgentmp 0, 0, 16, -2, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1
 
@@ -2465,7 +2424,6 @@ if krighthanote == 0 then
 endif
 rigthhanote:
 
-printk2 kinterval
 
 ;shift and synth
 ksemitdiff port kinterval, 0.02
@@ -2476,7 +2434,6 @@ fsig pvscale fain, semitone(ksemitdiff) * koctave, ikeepform, kgainsh, kcoefs
 fsigs pvsmooth fsig, 0.9, 0.9
 aout pvsynth fsigs
 $OUTMIXT
-;outs aout, aout
 endin
 
 
@@ -2645,6 +2602,12 @@ else
 endif
 
 $LOOPER
+
+//return to matrix in
+Sloop_in_ma sprintf "loop_in_ma%d", p4
+kloop_in_ma_ chnget Sloop_in_ma
+kloop_in_ma port kloop_in_ma_ * kloop_in_ma_, giport
+galoop_in_ma = galoop_in_ma + (aoutL + aoutR) * kloop_in_ma
 endin
 
 

@@ -12,8 +12,6 @@ Before lauching it with Csound For Android:
 3. change the --env:INCRIR+=/absolute/path/to/include/directory in CsOptions
 
 ## Bugs/TO DO
-1. the harmonizer doesent work properly, calculate correctly but transpose in a wrong way, in the test directory there is the same instrument as single file and this one seems to work right. To test matrix see preset
-2. make synth portamento behave properly
-3. manual
-
+1. manual
+2. add more effects
 

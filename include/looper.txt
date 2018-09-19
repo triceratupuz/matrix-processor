@@ -218,14 +218,7 @@ else
 	
 endif
 
-
-;printk2 ktreshv
-
-;table based looper
-kol_in port kol_in_, giport
-aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kol_re, kspeed + kspeed_mod, kreset, gimaxDlyTime
-
-;output
+;muter
 Smute sprintf  "mute%d", p4 
 chnset 0, Smute
 kmute chnget Smute
@@ -233,10 +226,17 @@ kmute_status init 1;is in play (1) or not (0)
 kmute_status = ( kmute == 1 && changed(kmute) == 1 ? (kmute_status + 1) % 2 :  kmute_status )
 kmuted port kmute_status, giport
 
+
+;table based looper
+kol_in port kol_in_, giport
+aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kol_re * kmuted, kspeed + kspeed_mod, kreset, gimaxDlyTime
+
+
+
 ;audio output
 ;outputs for direct, matrix, looper1, looper2 in instr 1004
 islotL = (p4 - 1) * 2 + 4
 islotR = (p4 - 1) * 2 + 5
-gaoutMix[islotL] = aoutL * kmuted * kenvdecl;adel1l
-gaoutMix[islotR] = aoutR * kmuted * kenvdecl;adel1r
+gaoutMix[islotL] = aoutL * kenvdecl
+gaoutMix[islotR] = aoutR * kenvdecl
 #
