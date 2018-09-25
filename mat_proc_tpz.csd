@@ -183,17 +183,14 @@ input[type=button].preset {
 }
 
 
-input[type=button].foot {
-               width:100%;
-}
-
 input[type=button].foothw {
                width:50%;
+               font-size:1.5em;
 }
 
 input[type=button].footdh {
                width:100%;
-               font-size:2.1em;
+               font-size:2.3em;
 }
 
 </style>
@@ -210,9 +207,10 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [3, "clip", "pre", "vol", "", ""],
     [4, "abs", "abs", "direct", "", ""],
     [5, "degrader", "fold", "bits", "dry-wet", ""],
-    [6, "powershape", "shape", "", "", ""],
+    [6, "powershape", "shape", "hp", "lp", "volume"],
     [8, "slow attack", "threshold", "time", "", ""],
     [9, "compressor", "gain", "threshold", "ratio", ""],
+    [70, "gate", "threshold", "lop-hip", "", ""],
     [10, "lowpass", "freq", "Q", "volume", ""],
     [11, "highpass", "freq", "volume", "", ""],
     [12, "evelopLp", "sens", "freq L", "freq H", "Q"],
@@ -221,6 +219,7 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [15, "condorcab", "scoop", "", "", ""],
     [19, "4b eq", "bass", "lowmid", "highmid", "high"],
     [20, "tremolo", "freq", "volume", "square", "dry-wet"],
+    [60, "tremoloBpm", "step", "qty", "square", "dry-wet"],
     [21, "flanger", "freq", "delay", "feedback", "dry-wet"],
     [22, "phaser", "lfo", "frequency", "feedback", "dry-wet"],
     [23, "chorus", "delay", "frequency", "feedback", "dry-wet"],
@@ -229,10 +228,14 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [26, "pitch HQ", "pitch", "fine", "dry-wet", ""],
     [27, "ring mod", "freq", "shape", "dry-wet", ""],
     [28, "freq mod", "car shift", "mod shift", "spread", "dry-wet"],
+    [29, "hilbert", "freq", "min shift", "max shift", "direction"],
     [30, "delay", "time", "feedback", "dry-wet", ""],
-    [31, "delayBpm", "step", "qty", "feedback", "dry-wet"],
+    [61, "delayBpm", "step", "qty", "feedback", "dry-wet"],
     [32, "reverseDelay", "time", "feedback", "dry-wet", ""],
+    [33, "crapDelay", "time", "crap", "feedback", "dry-wet"],
     [40, "reverb", "hp in", "size", "cutoff", "dry-wet"],
+    [41, "modulverb", "random", "feedback", "cutoff", "dry-wet"],
+    [42, "schroeder", "time", "pretime", "postime", "dry-wet"],
     [50, "spectral arp", "speed", "min", "max", "env"],
     [51, "freq shift", "freq", "gain", "dry-wet", ""],
     [52, "pseudo grain", "rate", "dlyratio", "feedback", "dry-wet"],
@@ -939,7 +942,7 @@ function setLeak(id){
 
 
 // Global timer to update gui
-var myVar = setInterval(myTimed, 200);
+var myVar = setInterval(myTimed, 300);
 
 //Function to be performed by Global timer
 function myTimed() {
@@ -1232,7 +1235,7 @@ for (lop =1; lop <= loopersqty; lop++) {
     <br><br>
     <h1>Freez</h1>
 </div>
-<div class="timew">
+<div style="width:12%;float:left;">
     <br><br>
     <select id="freezinput" onchange="changeDlyInput(id, value)">
         <option value="0">matrix</option>
@@ -1241,19 +1244,26 @@ for (lop =1; lop <= loopersqty; lop++) {
         <option value="3">loop3</option>
         <option value="4">loop4</option>
      </select>
-</div>
-<script>
-for (var frezz = 0; frezz < freezersqty; frezz++) {
-    document.write('<div class="time"><h1>' + (frezz +1) + '</h1>');
-    document.write('<input type="button" class= "footdh" value="Freez" id="freez' + 
-        (frezz +1) +
-        '" onclick="freezPlayRec(id)"></div>');
-}
-</script>
-<div class="time">
-<br>
+    <br>
     Rise time   <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="freezRise" oninput="sliderDo(id, value)">
 </div>
+<script>
+for (var frezz = 1; frezz <= freezersqty; frezz++) {
+    document.write('<div style="width:27%;float:left;">');
+    //document.write('<div class="time"><h1>' + frezz + '</h1>');
+         document.write('<div style="width:80%;float:left;">');
+            document.write('<h1>' + frezz + '</h1>');
+            document.write('<input type="button" class= "footdh" value="Freez" id="freez' + 
+            frezz + '" onclick="freezPlayRec(id)">');
+         document.write('</div>');
+         document.write('<div  style="float:left;width:9%;font-size:0.6em;padding:5%;">');
+             document.write("to<br>matrix<br>");
+             document.write('<input type="range" class="vertical2" min=0 max=1 value=0 step=0.001 id="freez_in_ma' + frezz + '" oninput="sliderDo(id, value)">');
+         document.write('</div>');
+     document.write('</div>');
+}
+</script>
+
 
 <div style="clear:both;"></div>
 <br>
@@ -1774,10 +1784,18 @@ endin
 instr 106;powershaper
 $INMIXT
 $PARAMT(1)
-kshapeamt = kpar1 * kpar1 * kpar1 * kpar1 * kpar1 * 32
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+krms rms ain
+kswing limit krms, 0, 1
+kshapeamt = 1 - ((kpar1 * 0.75) - 0.25 * kpar1 * kswing)
 alimin AtanLimit ain
 ashap powershape alimin, kshapeamt
-aout AtanLimit ashap
+ashhp buthp ashap, kpar2 * kpar2 * 20000
+ashlp butlp ashhp, kpar3 * kpar3 * 20000
+aoutl AtanLimit ashlp
+aout = aoutl * kpar4 * kpar4 * 4
 $OUTMIXT
 endin
 
@@ -1914,7 +1932,6 @@ endin
 
 
 
-
 instr 119;4 bands guitar eq 20 db
 $INMIXT
 $PARAMT(1)
@@ -1981,9 +1998,9 @@ $PARAMT(4)
 ;kpar3 - feedback
 ;kpar4 - dry - wet
 iord init 128; 1 - 4999
-kmod oscili 0.5, kpar1 * 2, giSine
-kmod = kmod + 0.5
-ares phaser1 ain, 100 + kpar2 * kpar2 * 10000 * kmod, iord, kpar3
+kmod oscili 0.49, kpar1 * kpar1 * 2, giSine
+kmod = kmod + 0.51
+ares phaser1 ain, 40 + kpar2 * kpar2 * 10000 * kmod, iord, kpar3
 aout CosSinMix ain, ares, kpar4
 $OUTMIXT
 endin
@@ -2137,6 +2154,47 @@ endin
 
 
 
+instr 129;hilbert
+$INMIXT
+;freq
+$PARAMT(1)
+;min shift
+$PARAMT(2)
+;max shift
+$PARAMT(3)
+;direction
+$PARAMT(4)
+
+aoscil oscili 0.5, kpar1 * kpar1 * kpar1 * 100, giSine
+koscil downsamp aoscil + 0.5
+kminShift = 20 + kpar2 * kpar2 * 10000
+kmaxShift = 20 + kpar3 * kpar3 * 10000
+kfreq = kminShift + koscil * (kmaxShift - kminShift)
+asin oscili 1, kfreq, giSine
+acos oscili 1, kfreq, giSine, .25
+
+;Phase quadrature output derived from input signal.
+areal, aimag hilbert ain
+;Based on trignometric identities.
+amod1 = areal * acos
+amod2 = aimag * asin
+; Calculate the up-shift and down-shift.
+aupshift = (amod1 + amod2) * 0.7
+adownshift = (amod1 - amod2) * 0.7
+; Make sure the output doesn't get louder than the original signal.
+aout1 balance aupshift, ain
+aout2 balance adownshift, ain
+
+if kpar4 >= 0 &&  kpar4 < 0.3 then;upshift only
+    aout = aout1 * 2
+elseif kpar4 >= 0.3 &&  kpar4 < 0.4 then;downshift only
+    aout = aout2 * 2
+else
+    aout = aout1 + aout2
+endif
+
+$OUTMIXT
+endin
 
 
 instr 130; delay
@@ -2147,29 +2205,7 @@ $PARAMT(3)
 abuf	delayr	1.1
 adel 	deltap	kpar1
 	delayw	ain + adel * kpar2
-;aout = adel * kpar3 + ain * (1 - kpar3)
 aout CosSinMix ain, adel, kpar3
-$OUTMIXT
-endin
-
-
-
-instr 131; bpm delay
-$INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
-
-istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
-kstep tab round(kpar1 * 4), istep
-ktime port kstep * (1 + kpar2) * 60 / gkbpm, giport
-
-abuf	delayr	5
-adel 	deltap	ktime
-	delayw	ain + adel * kpar3
-;aout = adel * kpar4 + ain * (1 - kpar4)
-aout CosSinMix ain, adel, kpar4
 $OUTMIXT
 endin
 
@@ -2216,6 +2252,30 @@ endin
 
 
 
+instr 133;crapdelay
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+
+awobble_ oscil kpar2 * .003, 1 / (4 * kpar1), giSine
+awobble = 1 + awobble_
+
+abuf delayr 8
+adeltap deltapi 4 * kpar1 * awobble
+ahp buthp adeltap, 20 + 500 * kpar2
+alp butlp ahp, 20000 - 15000 * kpar2
+anoise noise 0.001 * kpar2, 0.2
+afeed AtanLimit alp  + anoise
+delayw	ain + afeed * kpar3 * (1.2 + kpar2);compensation
+
+aout CosSinMix ain, afeed, kpar4
+$OUTMIXT
+endin
+
+
+
 instr 140; reverb
 $INMIXT
 $PARAMT(1)
@@ -2224,11 +2284,114 @@ $PARAMT(3)
 $PARAMT(4)
 ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
 aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
-;aout = (aoutL + aoutR) * kpar4 + ain * (1 - kpar4)
 aout CosSinMix ain, aoutL + aoutR, kpar4
 $OUTMIXT
 endin
 
+
+
+
+instr 141;modulated_verb
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+
+ilp1  init 1/10
+ilp2  init 1/23
+ilp3  init 1/41
+
+ajunk    alpass  ain, 1.7, 0.1
+aleft    alpass  ajunk, 1.01, .07
+
+ajunk    alpass  ain, 1.5, 0.2
+aright   alpass  ajunk, 1.33, .05
+
+kdel1_    randi   .01 * kpar1, 0.5, .666
+kdel1 portk kdel1_, kpar1 / 0.47
+kdel1    =       kdel1 + 0.01
+addl1    delayr  .3
+afeed1   deltapi kdel1
+    delayw afeed1 * kpar1 + aleft
+
+kdel2_    randi   .01 * kpar1, 0.47, .777
+kdel2 portk kdel2_, kpar1 / 0.51
+kdel2    =       kdel2 + 0.01
+addl2    delayr  .3
+afeed2   deltapi kdel2
+    delayw afeed2 * kpar2 + aright
+
+;post reverb
+aglobin AtanLimit (afeed1 + afeed2) * (0.5 - 0.30 * kpar1)
+atap1 comb aglobin, 3.3, ilp1
+atap2 comb aglobin, 3.3, ilp2
+atap3 comb aglobin, 3.3, ilp3
+aglobrev alpass atap1 + atap2 + atap3, 2.6, .085
+aglobrev_ tone aglobrev, 30 + kpar3 * kpar3 * 24000
+aglobrev buthp aglobrev_, 90 - 40 * kpar1
+
+kdel3 randi .003, 0.2, .888
+kdel3 = kdel3 + .05
+addl3 delayr .2
+agr1 deltapi kdel3
+    delayw aglobrev + agr1 * 0.5 * kpar1
+
+kdel4 randi .0033, 0.27, .999
+kdel4 = kdel4 + .05
+addl4 delayr .2
+agr2 deltapi kdel4
+    delayw aglobrev + agr2 * 0.5 * kpar1
+
+aout CosSinMix ain, (agr1 + afeed1+ agr2 + afeed2) / 4, kpar4
+$OUTMIXT
+endin
+
+
+
+
+instr 142;shroeder verb
+$INMIXT
+$PARAMT(1)
+;revtime
+$PARAMT(2)
+;pretime
+$PARAMT(3)
+;postime
+$PARAMT(4)
+;d-w
+
+; four parallel comb filters
+;kRvt reverb time
+imaxlpt1 init 0.0297
+imaxlpt2 init 0.0371
+imaxlpt3 init 0.0411
+imaxlpt4 init 0.0437
+;A
+a1L vcomb ain, kpar1, imaxlpt1 * kpar2, imaxlpt1 * 3 
+a2L vcomb ain, kpar1, imaxlpt2 * kpar2, imaxlpt2 * 3 
+a3L vcomb ain, kpar1, imaxlpt3 * kpar2, imaxlpt3 * 3 
+a4L vcomb ain, kpar1, imaxlpt4 * kpar2, imaxlpt4 * 3 
+asumL sum a1L, a2L, a3L, a4L
+;B
+a1R vcomb ain, kpar1, imaxlpt1 * kpar2 * .97, imaxlpt1 * 3 
+a2R vcomb ain, kpar1, imaxlpt2 * kpar2 * .96, imaxlpt2 * 3 
+a3R vcomb ain, kpar1, imaxlpt3 * kpar2 * .95, imaxlpt3 * 3 
+a4R vcomb ain, kpar1, imaxlpt4 * kpar2 * .94, imaxlpt4 * 3 
+asumR sum a1R, a2R, a3R, a4R
+
+; two allpass filters in series
+imaxlpt5 init 0.005
+;A
+a5L valpass asumL + asumR * 0.1, 0.1, imaxlpt5 * kpar3, imaxlpt5 * 3
+aOutL alpass a5L, 0.1, 0.02295
+;B
+a5R valpass asumR + asumL * 0.1, 0.1, imaxlpt5 * kpar3, imaxlpt5 * 3
+aOutR alpass a5R, 0.1, 0.02287
+
+aout CosSinMix ain, (aOutL + aOutR) / 1.41, kpar4
+$OUTMIXT
+endin
 
 
 
@@ -2255,7 +2418,6 @@ if kpar2 < kpar3 then
     kbin = kl + kbin_ * (kh - kl)
 else
     kbin = kl - kbin_ * (kl - kh)
-    ;kbin = kl + (1 - kbin_) * (kh - kl)
 endif
 
 kdepth init 1
@@ -2270,8 +2432,6 @@ aenv = 1- aenv
 aout = arpeg * aenv
 $OUTMIXT
 endin
-
-
 
 
 
@@ -2336,16 +2496,14 @@ $PARAMT(2)
 $PARAMT(3)
 ;dry-wet
 $PARAMT(4)
-kfreq = 0.1 + kpar1 * kpar1 * 10000
-abuf delayr 10
-adeltap deltap 1 / kfreq
-adeltapb butlp adeltap, 20 + kpar2 * kpar2 * 20000
-    delayw ain + adeltapb * kpar3
-aout CosSinMix ain, adeltapb, kpar4
+
+kfrq = 20 + kpar1 * kpar1 * 2000
+kcutoff = 40 + kpar2 * kpar2 * 15000
+kfeed = 1 - ((1 - kpar3) * (1- kpar3))
+aout wguide1 ain, kfrq, kcutoff, kfeed
+aout CosSinMix ain, aout, kpar4
 $OUTMIXT
 endin 
-
-
 
 
 
@@ -2383,8 +2541,6 @@ iwinsize  = ifftsize
 iwinshape = 1		;von-Hann window
 fain  pvsanal ain, ifftsize, ioverlap, iwinsize, iwinshape
 kfr_tracked, kamp pvspitch fain, 0.01
-
-
 
 ;input Frequency to midi note number
 knote = 69 + 12 * log2(kfr_tracked / 440)
@@ -2424,7 +2580,6 @@ if krighthanote == 0 then
 endif
 rigthhanote:
 
-
 ;shift and synth
 ksemitdiff port kinterval, 0.02
 ikeepform init 0
@@ -2438,8 +2593,99 @@ endin
 
 
 
+instr 160;tremoloBpm
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+
+istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
+kstep tab round(kpar1 * 4), istep
+ktime port kstep * (1 + kpar2) * 60 / gkbpm, giport
+
+ifno ftgentmp 0, 123, 8192, 10, 1
+iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
+ftmorf kpar3  * 2, iftfn, ifno
+amod oscil 0.5, 1/ktime, ifno
+ares = (amod + 0.5) * 2 * ain
+
+aout CosSinMix ain, ares, kpar4
+$OUTMIXT
+endin
 
 
+
+
+instr 161;delayBpm
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+
+istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
+kstep tab round(kpar1 * 4), istep
+ktime port kstep * (1 + kpar2) * 60 / gkbpm, giport
+
+abuf	delayr	5
+adel 	deltap	ktime
+	delayw	ain + adel * kpar3
+
+aout CosSinMix ain, adel, kpar4
+$OUTMIXT
+endin
+
+
+
+
+instr 170;gate
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+
+reset:
+ihalftab = 16384
+knull = 0.0001 + kpar_1 * kpar_1 * 0.999
+inull = i(knull)
+;gating function 
+ifuncth ftgentmp 0, 123, ihalftab * 2, 6, 1, ihalftab - ihalftab * inull, 0,  ihalftab * inull, 0, ihalftab * inull, 0, ihalftab - ihalftab * inull, 1
+
+isteep = 0.99
+ifunctl ftgentmp 0, 123, ihalftab * 2, 6, 0, ihalftab - (ihalftab * inull) * isteep, 0, (ihalftab * inull) * (1 - isteep), 1, ihalftab * inull, 1, ihalftab * inull, 1,  (ihalftab * inull) * (1 - isteep), 0, ihalftab - (ihalftab * inull) * isteep, 0
+
+aouth tab (ain + 1) * ihalftab, ifuncth
+aoutl tab (ain + 1) * ihalftab, ifunctl
+rireturn
+
+;check for update slowly
+ktrig  metro 10
+kch changed kpar_1
+kchng init 0
+if kchng == 0 && kch == 1 then
+    kchng = 1
+endif
+
+; reinit the transfer function
+if kchng == 1 && ktrig == 1 then
+    reinit reset
+    kchng = 0
+endif
+
+;mixing variants
+aout = 0
+if kpar2 > 0.5 then
+    kouth_ downsamp aouth
+    kouth port kouth_, 0.15
+    aout = kouth * ain
+else
+    koutl_ downsamp aoutl
+    koutl port koutl_, 0.15
+    aout = koutl * ain
+endif
+
+$OUTMIXT
+endin
 
 
 
@@ -2603,11 +2849,11 @@ endif
 
 $LOOPER
 
-//return to matrix in
+;return to matrix in
 Sloop_in_ma sprintf "loop_in_ma%d", p4
 kloop_in_ma_ chnget Sloop_in_ma
 kloop_in_ma port kloop_in_ma_ * kloop_in_ma_, giport
-galoop_in_ma = galoop_in_ma + (aoutL + aoutR) * kloop_in_ma
+galoop_in_ma AtanLimit galoop_in_ma + (aoutL + aoutR) * kloop_in_ma * kloop_in_ma * 2
 endin
 
 
@@ -2653,14 +2899,34 @@ endin
 
 
 instr 1105;freezer
-kenv linsegr 0, 0.01, 0, p5, 1, p5, 0
-kfreez line 0, 0.01, 1.1
-fsig pvsfreeze gffreez, kfreez, kfreez
-ares      pvsynth fsig
-areso = ares * kenv / 1.41421
+;buffer
+idelbuf = 0.03
+kenv linsegr 0, idelbuf * 2, 0, p5, 1, p5, 0
+ktime line 0, idelbuf, 1.00
+if (ktime < 1) then
+    ibuf1, kt1 pvsbuffer gffreez, idelbuf
+endif
+khan init ibuf1
+if (ktime > 1) then
+    kpt phasor 1 / idelbuf	
+    kspl jspline 0.1, 0.2, 1
+    kpointer wrap (kpt + kpt * kspl), 0, 1
+    fsb1 pvsbufread kpointer * idelbuf, khan, 31, sr/3, 1
+    ;fshift pvscale fsb1, semitone(kshiftP), 0, 1, 70	
+    ;aout pvsynth fshift
+    aout pvsynth fsb1
+endif
+aout buthp aout, 31
+
+;to output
+areso = aout * kenv
 gaoutMix[11 + p4] = areso
-;gaoutMix[2] = gaoutMix[2] + areso / 1.41421
-;gaoutMix[3] = gaoutMix[3] + areso / 1.41421
+
+;return to matrix in
+Sfreez_in_ma sprintf "freez_in_ma%d", p4
+kfreez_in_ma_ chnget Sfreez_in_ma
+kfreez_in_ma port kfreez_in_ma_ * kfreez_in_ma_, giport
+galoop_in_ma AtanLimit galoop_in_ma + areso * kfreez_in_ma * kfreez_in_ma * 2
 endin
 
 

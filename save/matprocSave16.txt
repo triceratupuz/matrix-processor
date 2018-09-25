@@ -1,9 +1,9 @@
-======= TABLE 10 size: 128 values ======
+======= TABLE 26 size: 128 values ======
 flen: 128
 lenmask: 127
 lobits: 17
 lomask: 131071
-lodiv: 0.000008
+lodiv: 0.000000
 cvtbas: 0.000000
 cpscvt: 0.000000
 loopmode1: 0
@@ -15,7 +15,7 @@ end2: 0
 soundend: 0
 flenfrms: 128
 nchnls: 1
-fno: 10
+fno: 26
 gen01args.gen01: 0.000000
 gen01args.ifilno: 0.000000
 gen01args.iskptim: 0.000000

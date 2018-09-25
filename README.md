@@ -14,4 +14,7 @@ Before lauching it with Csound For Android:
 ## Bugs/TO DO
 1. manual
 2. add more effects
+3. Some residual noise remain in the matrix when swithing from loud/noisy presets
+4. Loopers time not memorized/updated when looper is off
+5. Loopers Statr stop button update state when changing mode (man/autostart/...)
 

@@ -18,8 +18,7 @@ if changed(keff$N) == 1 && keff$N != keffprev$N then
   keffprev$N = keff$N
   kinprev$N = kinnew$N
 endif
-;kindcurinst$N init p5 * 8 + $N
-;tablew kinprev$N, kindcurinst$N, gicurinstr
+
 #
 
 
@@ -54,15 +53,12 @@ ain AtanLimit kenv * (ga_in[p5][0] * kdir) + kenvr * (ga_in[p5][1] * kch1 + ga_i
 #define OUTMIXT #
 kouv_ tab kcol+14, 5+p5 
 kouv port kouv_ * kouv_ * 4, giport
-;ga_out[p5][p4] AtanLimit kenvr * aout
 ga_out[p5][p4] = kenvr * aout
 #
 
 #define PARAMT(N) #
 kparind_$N init (p4 -1) * 16 + 8 +$N
-;kpar_$N tab kcol+8+$N, 5+p5
 kpar_$N tab kparind_$N, 5+p5
-;printk2 kpar_$N
 kpar$N port kpar_$N, giport
 #
 
@@ -70,7 +66,7 @@ kpar$N port kpar_$N, giport
 indmatv$N init 16 * ($N -1) + 14
 kmatv_$N tab k(indmatv$N), 5 + p5
 kmatv$N port kmatv_$N * kmatv_$N * kmatv_$N * 8, giport
-ga_in[p5][$N] = ga_out[p5][$N] * kmatv$N
+ga_in[p5][$N] = ga_out[p5][$N] * kmatv$N * kenvr
 #
 
 #define OUTLINET(N) #
