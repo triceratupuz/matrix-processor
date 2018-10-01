@@ -35,8 +35,8 @@ h1 {
 
 label {
 	color: #000000;
-	font-weight: bold;
-	font-size:1.05em;
+	//font-weight: bold;
+	font-size:0.9em;
 }
 
 .mixer {
@@ -211,6 +211,7 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [8, "slow attack", "threshold", "time", "", ""],
     [9, "compressor", "gain", "threshold", "ratio", ""],
     [70, "gate", "threshold", "lop-hip", "", ""],
+    [71, "shortEnv", "threshold", "attack", "sustain", "release"],
     [10, "lowpass", "freq", "Q", "volume", ""],
     [11, "highpass", "freq", "volume", "", ""],
     [12, "evelopLp", "sens", "freq L", "freq H", "Q"],
@@ -236,6 +237,7 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [40, "reverb", "hp in", "size", "cutoff", "dry-wet"],
     [41, "modulverb", "random", "feedback", "cutoff", "dry-wet"],
     [42, "schroeder", "time", "pretime", "postime", "dry-wet"],
+    [43, "enverb", "hp in", "size", "cutoff", "threshold"],
     [50, "spectral arp", "speed", "min", "max", "env"],
     [51, "freq shift", "freq", "gain", "dry-wet", ""],
     [52, "pseudo grain", "rate", "dlyratio", "feedback", "dry-wet"],
@@ -673,11 +675,11 @@ function freezPlayRec(id)  {
 
 function loopMuter(id) {
 	var el = document.getElementById(id);
-	if (el.value == "Mute") {
-		el.value = "Muted";
+	if (el.value == "Kill") {
+		el.value = "Dead";
 		el.style.background="#ff0000";
 	} else {
-		el.value = "Mute";
+		el.value = "Kill";
 		el.style.background="#bbbbbb";
 	}
 	activator(id);
@@ -774,7 +776,20 @@ function selectDoTime(id) {
     selectDo(id);
 }
 
+function selectReAm(id, cha) {
+    var e = document.getElementById(id);
+    var strUser = e.options[e.selectedIndex].value;
+    var numberValue = parseFloat(strUser);
+    csoundApp.setControlChannel(id, numberValue);
+    //update slider Rep
+    var chan = "ol_re" + cha;
+    if (numberValue == 0) {
+        csoundApp.setControlChannel(chan, 1.0);
+    } else {
+        csoundApp.setControlChannel(chan, 0.0);
+    }
 
+}
 
 
 
@@ -926,23 +941,11 @@ function set_tap(id) {
     }, 200)//delay of 200 ms necessary to allow javascript minimum time
 }
 
-function setLeak(id){
-    //set leak between programs
-    var el = document.getElementById(id);
-    if (leak == 0){
-        leak = 1;
-        el.style.background="#ff0000";
-    } else {
-        leak = 0;
-        el.style.background="#bbbbbb";
-    }
-    csoundApp.setControlChannel("leak", leak);
-}
 
 
 
 // Global timer to update gui
-var myVar = setInterval(myTimed, 300);
+var myVar = setInterval(myTimed, 500);
 
 //Function to be performed by Global timer
 function myTimed() {
@@ -965,6 +968,13 @@ function myTimed() {
     updThr("autothr2");
     updThr("autothr3");
     updThr("autothr4");
+    //repeat change
+    updThr("ol_re1");
+    updThr("ol_re2");
+    updThr("ol_re3");
+    updThr("ol_re4");
+    //number of active chains
+    updChIndicator();
 }
 
 
@@ -982,12 +992,19 @@ function vuMeter(id) {
 
 
 function updThr(id) {
-    //autothr%d
+    //autothr%d //
     var thrV = csoundApp.getControlChannel(id);
     var thrE = document.getElementById(id);
     thrE.value = thrV;
 }
 
+
+function updChIndicator() {
+    //update number of chains
+    var val = csoundApp.getControlChannel("upch");
+    document.getElementById("upch").innerHTML = val;
+
+}
 
 
 
@@ -1005,8 +1022,7 @@ window.onload = function(){loada();};
 <input type="number" class="head" min=20 max=400 step="any" value=60 id="bpm" onchange="changeBpm(id, value)">
 <input type="button" class="bpm" value="BpM" id="tap" onclick="set_tap(id)">
 <input type="number" class="head" min=0 max=20 step="any" value=0 id="tailtime" onchange="numberDoLimit(id, value, 0, 20)">
-<!--<label>Tail</label>-->
-<input type="button" class="bpm" value="Tail" id="leak" onclick="setLeak(id)">
+<label>Tail:</label><label id="upch">0</label>
 
 <input type="button" class='viuw' value="matrix" id="matr" onclick="toggler('matrix', 'loopers', 'midiw')">
 <input type="button" class='viuw' value="midi" id="miid" onclick="toggler('midiw', 'loopers', 'matrix')">
@@ -1148,7 +1164,7 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('<div class="loopthr">');
     document.write('<select id="autothrmode' + lop + '" onchange="changeDlyMode(id, value)">');
     document.write('                                      <option value="0">OFF</option>');
-    document.write('                                      <option value="1">man</option>');
+    document.write('                                      <option value="1" selected>man</option>');
     document.write('                                      <option value="2">autoend</option>');
     document.write('                                      <option value="3">thrStart</option>');
     document.write('                                      <option value="4">thrStartautoend</option>');
@@ -1159,13 +1175,14 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('<div class="time">');
     document.write('<input type="button" class= "footdh" value="Play" id="looprec' + lop + '" onclick="loopPlayRec(id)">');
     document.write('<input type="button" class= "foothw" value="P 0" id="resetp' + lop+ '" onclick="activator(id)">');
-    document.write('<input type="button" class= "foothw" value="Mute" id="mute' + lop+ '" onclick="loopMuter(id)">');
+    document.write('<input type="button" class= "foothw" value="Kill" id="mute' + lop+ '" onclick="loopMuter(id)">');
     //matrix input
     document.write('<select id="looperInput' + lop + '" onchange="changeDlyInput(id, value)">');//function to be written
     document.write('                                      <option value="0">from matrix</option>');
     for (lopc =1; lopc < lop; lopc++) {
         document.write('                                      <option value="'+ lopc + '">from loop' + lopc +'</option>');
     }
+    document.write('                                      <option value="5">direct in</option>');
     document.write('</select><br>');
     document.write('</div>');
 
@@ -1192,7 +1209,7 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('</div>');
 
     document.write('<div class="time">');
-    document.write('<select id="repamp'+lop+'" class= "foot" onchange="selectDo(id)">');
+    document.write('<select id="repamp'+lop+'" class= "foot" onchange="selectReAm(id, ' + lop + ')">');
     document.write('                                      <option value="0" selected>reduce</option>');
     document.write('                                      <option value="1">amplify</option>');
     document.write('</select>');
@@ -1243,6 +1260,7 @@ for (lop =1; lop <= loopersqty; lop++) {
         <option value="2">loop2</option>
         <option value="3">loop3</option>
         <option value="4">loop4</option>
+        <option value="5">direct in</option>
      </select>
     <br>
     Rise time   <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="freezRise" oninput="sliderDo(id, value)">
@@ -1349,6 +1367,12 @@ gihalfsine ftgen	149, 0, 4097, 9, 0.5, 1, 0
 gigrainenv ftgen 150, 0, 4096, 7, 0, 4096/2, 1, 4096/2, 0 
 
 
+;Global parameter values for pvsanal
+gifftsize  = 1024;larger value higher precision
+gioverlap  = gifftsize / 4;smaller value higher precision
+giwinsize  = gifftsize;larger value higher precision higher latency, at least gifftsize
+giwinshape = 1;von-Hann window
+
 
 
 instr  1
@@ -1397,7 +1421,6 @@ if kload == 1 && changed(kload)== 1 then
 	event "i", -1000 - 0.1 - 0.1 * kchain + 0.1, 0, -1, kpreset, kchain, gktailtime
               ;advance audio cannels p5
 	kchain = (kchain + 1) % 5
-              ;	
               gkchainleak = (kchain + 1) % 5
               ;start new programs
 	event "i", 10 + 0.1 + 0.1 * kchain, 0, -1, kpreset, kchain
@@ -1441,12 +1464,11 @@ galeak init 0
 event_i "i", 10.1, 0, -1, 0, 0
 event_i "i", 50.1, 0, -1, 0, 0
 event_i "i", 52, 0, -1
-event_i "i", 1000.1, 0, -1, 0, 0
+;event_i "i", 1000.1, 0, -1, 0, 0
 event_i "i", 90, 0, -1, 0, 0;fixed
 event_i "i", 1001, 0, -1
 event_i "i", 1100, 0, -1
 event_i "i", 2000, 0, -1, 0, 0
-
 
 endin
 
@@ -1699,13 +1721,11 @@ ga_in[7][0] = ain + galoop_in_ma
 ;write to output mixer
 gaoutMix[0] = ain
 gaoutMix[1] = ain
-;add leakage to next program
-ga_in[gkchainleak][0] = ga_in[gkchainleak][0]  + galeak
-;reset leakage
-galeak = 0
 ;reset audio from loopers
 galoop_in_ma = 0
 endin
+
+
 
 
 
@@ -1714,6 +1734,7 @@ instr 100;nothing instrument
 ip4 = p4
 ip5 = p5
 ip6 = p6
+ga_out[p5][p4] = 0
 endin
 
 
@@ -2101,12 +2122,13 @@ ksemitones = round((kpar1 - 0.5) * 48)
 ktransp = semitone(ksemitones); transpose +- 24
 ksign =(ktransp < 0 ? -1 : 1)
 kfine = semitone(kpar2) * ksign
+/*
 ifftsize  = 1024
 ioverlap  = ifftsize / 4
 iwinsize  = ifftsize
 iwinshape = 1		;von-Hann window
-
-fftin     pvsanal ain, ifftsize, ioverlap, iwinsize, iwinshape
+*/
+fftin     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 fftblur   pvscale fftin, ktransp * kfine
 ares      pvsynth fftblur	
 
@@ -2282,6 +2304,7 @@ $PARAMT(1)
 $PARAMT(2)
 $PARAMT(3)
 $PARAMT(4)
+denorm ain
 ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
 aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
 aout CosSinMix ain, aoutL + aoutR, kpar4
@@ -2302,6 +2325,7 @@ ilp1  init 1/10
 ilp2  init 1/23
 ilp3  init 1/41
 
+denorm ain
 ajunk    alpass  ain, 1.7, 0.1
 aleft    alpass  ajunk, 1.01, .07
 
@@ -2361,6 +2385,7 @@ $PARAMT(3)
 $PARAMT(4)
 ;d-w
 
+denorm ain
 ; four parallel comb filters
 ;kRvt reverb time
 imaxlpt1 init 0.0297
@@ -2395,6 +2420,32 @@ endin
 
 
 
+instr 143;envreverb
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+denorm ain
+ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
+aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
+
+;dry-wet balance based on the input signal envelope
+atrk follow2 ain, 0.05, 0.05
+ktrk downsamp atrk
+kmix_ init 0
+if ktrk < kpar4 then 
+    kmix_ = 1
+else
+    kmix_ = (ktrk - kpar4) / (1 - kpar4)
+endif
+kmix port kmix_, 0.1
+aout CosSinMix ain, aoutL + aoutR, kmix
+$OUTMIXT
+endin
+
+
+
 instr 150;spectral arpeggiator
 $INMIXT
 $PARAMT(1)
@@ -2404,13 +2455,15 @@ $PARAMT(4)
 kfrr = kpar1 * kpar1 * 30
 kl = kpar2 * kpar2
 kh = kpar3 * kpar3
+/*
 ifftsize  = 1024
 ioverlap  = ifftsize / 4
 iwinsize  = ifftsize
 iwinshape = 1		;von-Hann window
-fftin     pvsanal ain, ifftsize, ioverlap, iwinsize, iwinshape
+*/
+fftin     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 
-ifno ftgentmp 0, 0, ifftsize, 7, 0, ifftsize, 1
+ifno ftgentmp 0, 0, gifftsize, 7, 0, gifftsize, 1
 kbin init 0
 kbin_ oscil 1, kfrr, ifno
 
@@ -2426,7 +2479,7 @@ farp pvsarp fftin, kbin, kdepth, kgain
 arpeg      pvsynth farp	
 
 ;enveloping
-ifnoenv ftgentmp 0, 0, ifftsize, 7, 0, ifftsize/2, 1, ifftsize/2, 0
+ifnoenv ftgentmp 0, 0, gifftsize, 7, 0, gifftsize/2, 1, gifftsize/2, 0
 aenv oscil kpar4, kfrr, ifnoenv
 aenv = 1- aenv
 aout = arpeg * aenv
@@ -2446,11 +2499,13 @@ $PARAMT(3)
 
 kshift_ = (kpar1 - 0.5) * 2
 kshift = kshift_ * kshift_ * 500;-500 + 500 exponential
+/*
 ifftsize = 1024
 ioverlap = ifftsize / 4
 iwinsize = ifftsize
 iwinshape = 1
-fftin pvsanal ain, ifftsize, ioverlap, iwinsize, iwinshape
+*/
+fftin pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 fftblur pvshift fftin, kshift, 20
 ares pvsynth fftblur
 aout CosSinMix ain, ares * kpar2 * kpar2 * kpar2 * 8, kpar3
@@ -2535,11 +2590,13 @@ endif
 iscala ftgentmp 0, 0, 16, -2, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1
 
 ;lowest f = sr / ifftsize
+/*
 ifftsize  = 1024 * 2
 ioverlap  = ifftsize / 4
 iwinsize  = ifftsize
 iwinshape = 1		;von-Hann window
-fain  pvsanal ain, ifftsize, ioverlap, iwinsize, iwinshape
+*/
+fain  pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 kfr_tracked, kamp pvspitch fain, 0.01
 
 ;input Frequency to midi note number
@@ -2689,11 +2746,56 @@ endin
 
 
 
+instr 171;trapez envelope
+;[71, "shortEnv", "threshold", "attack", "sustain", "release"],
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+atrk follow2 ain, 0.05, 0.05
+ktrk downsamp atrk
+
+kpar2 init 0
+kpar3 init 0
+kpar4 init 0
+katt = kpar2 * 0.25
+ksus = kpar3
+krel = kpar4
+
+reset:
+iatt = i(katt)
+isus = i(ksus)
+irel = i(krel)
+kenv expseg 0.0001, iatt, 1.0001, isus, 1.0001, irel, 0.0001
+rireturn
+
+klogic init 0
+
+ktratt trigger ktrk, kpar1, 0
+;attack
+if ktratt == 1 && changed(ktratt) == 1 && klogic == 0 then
+    klogic = 1
+    reinit reset
+endif
+
+ktrrel trigger ktrk, kpar1, 1
+;release
+if ktrrel == 1 && changed(ktrrel) == 1 && klogic == 1 then
+    klogic = 0
+endif
+
+aout = ain * (kenv - 0.0001)
+$OUTMIXT
+endin
+
+
+
+
 
 instr 1000;output
-;print p6
 ;release with tails - for audio output
-kenvr linsegr 0, giport, 1, giport + p6, 0; p6 to extend duration
+xtratim 2 * giport + p6
 
 ;output router to inputs
 $FEEDINT(1)
@@ -2716,20 +2818,15 @@ almat = al1 + al2 + al3 + al4 + al5 + al6 + al7
 armat = ar1 + ar2 + ar3 + ar4 + ar5 + ar6 + ar7
 
 ;audio out, tails
-gaoutMix[2] AtanLimit gaoutMix[2] + almat * kenvr
-gaoutMix[3] AtanLimit gaoutMix[3] + armat * kenvr
+gaoutMix[2] AtanLimit gaoutMix[2] + almat
+gaoutMix[3] AtanLimit gaoutMix[3] + armat
 
-
-;leakage to next program, written with instr 90
-kleak_ chnget "leak"
-kleak port kleak_, giport
-galeak = galeak + kleak * kenvr * (almat + armat) / 1.41421
 endin
 
 
 
 
-instr 1001;freezer controls
+instr 1001;loopers and freezer controls
 
 krise chnget "freezRise"
 chnset 0.5, "freezRise"
@@ -2815,6 +2912,19 @@ elseif changed(kactiv_mode4) == 1 && kactiv_mode4 == 0 && kactiv_loop4 == 1 then
     event "i", -1004.4, 0, -1
 endif
 
+;start loopers
+kactiv_loop1 init 1 
+kactiv_loop2 init 1 
+kactiv_loop3 init 1 
+kactiv_loop4 init 1 
+chnset 1, "autothrmode1"
+chnset 1, "autothrmode2"
+chnset 1, "autothrmode3"
+chnset 1, "autothrmode4"
+event_i "i", 1004.1, 0, -1, 1, 1
+event_i "i", 1004.2, 0, -1, 2, 1
+event_i "i", 1004.3, 0, -1, 3, 1
+event_i "i", 1004.4, 0, -1, 4, 1
 endin
 
 
@@ -2823,7 +2933,7 @@ endin
 
 
 instr 1004;output loopers
-;p4 looper number, 1 or 2 (or 3?)
+;p4 looper number
 ;audio input
 ;looperInput$N 0 matrix, 1 looper 1, 2 looper2 , 3 looper 3,4 looper4 
 Sinput sprintf "looperInput%d", p4
@@ -2842,6 +2952,9 @@ elseif kinput == 3 then
 elseif kinput == 4 then
     ainL = gaoutMix[10] * kenvdecl
     ainR  = gaoutMix[11] * kenvdecl
+elseif kinput == 5 then
+    ainL = gaoutMix[0] * kenvdecl
+    ainR  = gaoutMix[1] * kenvdecl
 else
     ainL = gaoutMix[2] * kenvdecl
     ainR  = gaoutMix[3] * kenvdecl
@@ -2879,6 +2992,9 @@ elseif kinput == 3 then
 elseif kinput == 4 then
     ainL = gaoutMix[10]
     ainR  = gaoutMix[11]
+elseif kinput == 5 then
+    ainL = gaoutMix[0]
+    ainR  = gaoutMix[1]
 else
     ainL = gaoutMix[2]
     ainR  = gaoutMix[3]
@@ -2887,11 +3003,13 @@ endif
 ain = (ainL + ainR) / 1.41421
 ;ain = (gaoutMix[2] + gaoutMix[3]) / 1.41421
 
+/*
 ifftsize  = 1024;512?
 ioverlap  = ifftsize / 4
 iwinsize  = ifftsize
 iwinshape = 1	;von-Hann window
-gffreez     pvsanal ain, ifftsize, ioverlap, iwinsize, iwinshape
+*/
+gffreez     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 
 endin
 
@@ -2968,15 +3086,11 @@ kmix_f2 port kmix_f2_ * kmix_f2_ * 4, giport
 kmix_f3_ chnget "mix_f3"
 kmix_f3 port kmix_f3_ * kmix_f3_ * 4, giport
 
-
-
 galtot = gaoutMix[0] * kmix_in  + gaoutMix[2] * kmix_ma + gaoutMix[4] * kmix_l1 + gaoutMix[6] * kmix_l2 + gaoutMix[8] * kmix_l3 + gaoutMix[10] * kmix_l4 + gaoutMix[12] * kmix_f1 + gaoutMix[13] * kmix_f2 + gaoutMix[14] * kmix_f3
 
 gartot = gaoutMix[1] * kmix_in  + gaoutMix[3] * kmix_ma + gaoutMix[5] * kmix_l1 + gaoutMix[7] * kmix_l2 + gaoutMix[9] * kmix_l3 + gaoutMix[11] * kmix_l4 + gaoutMix[12] * kmix_f1 + gaoutMix[13] * kmix_f2 + gaoutMix[14] * kmix_f3
 
 outs galtot, gartot 
-
-
 
 ;Update vumeter
 kupdate metro 2
@@ -2990,6 +3104,9 @@ kloop3outv max_k gaoutMix[8] + gaoutMix[9], kupdate, 1
 kloop4outv max_k gaoutMix[10] + gaoutMix[11], kupdate, 1
 ktotaloutv max_k galtot + gartot , kupdate, 1
 
+kinstmonitor init 1000
+kch active kinstmonitor
+;printk2 kch
 if kupdate == 1 then
     chnset kmatrixoutv, "matrixoutv"
     chnset ktotaloutv, "totaloutv"
@@ -3000,6 +3117,8 @@ if kupdate == 1 then
     chnset kloop2outv, "loop2outv"
     chnset kloop3outv, "loop3outv"
     chnset kloop4outv, "loop4outv"
+    ;number of active chains
+    chnset kch, "upch"
 endif
 
 endin

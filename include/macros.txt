@@ -44,8 +44,22 @@ kch5 port kch5_ * kch5_ * 4,  giport
 kch6 port kch6_ * kch6_ * 4,  giport
 kch7 port kch7_ * kch7_ * 4,  giport
 
-kenv linsegr 0, giport, 1, giport, 0
-kenvr linsegr 0, giport, 1, giport + irelease, 0
+xtratim 2 * giport + irelease
+krel init 0 
+krel release
+if (krel == 1) kgoto rel
+;attack and sustain
+kmp1 linseg 0, giport, 1
+kenv = kmp1
+kenvr = kmp1
+kgoto done ; 
+;release section
+rel: 
+kmp2 linseg 1, irelease / 2, 1, giport + irelease / 2, 0, giport, 0
+kmp3 linseg 1, giport, 0, giport + irelease, 0
+kenv = kmp1 * kmp3
+kenvr = kmp1 * kmp2
+done:
 
 ain AtanLimit kenv * (ga_in[p5][0] * kdir) + kenvr * (ga_in[p5][1] * kch1 + ga_in[p5][2] * kch2 + ga_in[p5][3] * kch3 + ga_in[p5][4] * kch4 + ga_in[p5][5] * kch5 + ga_in[p5][6] * kch6 + ga_in[p5][7] * kch7)
 #
@@ -66,7 +80,7 @@ kpar$N port kpar_$N, giport
 indmatv$N init 16 * ($N -1) + 14
 kmatv_$N tab k(indmatv$N), 5 + p5
 kmatv$N port kmatv_$N * kmatv_$N * kmatv_$N * 8, giport
-ga_in[p5][$N] = ga_out[p5][$N] * kmatv$N * kenvr
+ga_in[p5][$N] = ga_out[p5][$N] * kmatv$N; * kenvr
 #
 
 #define OUTLINET(N) #

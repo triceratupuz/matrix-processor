@@ -149,7 +149,6 @@ elseif kactiv_mode == 4  then
 endif
 
 
-
 if krec_status == 1 && changed(krec_status) == 1 then ;recording on
               chnset k(1), Sautothr;set threshold to max to avoid retrigger
               ktreshv = 1
@@ -170,11 +169,6 @@ elseif krec_status == 0 && changed(krec_status) == 1 then ;recording off
             endif
             chnset krec_status, Srecstatus
 endif
-
-
-
-;printk2 kol_ti_
-
 
 
 if krec_status == 1 then
@@ -225,11 +219,11 @@ kmute chnget Smute
 kmute_status init 1;is in play (1) or not (0)
 kmute_status = ( kmute == 1 && changed(kmute) == 1 ? (kmute_status + 1) % 2 :  kmute_status )
 kmuted port kmute_status, giport
-
+kfeedback = kol_re * kmuted
 
 ;table based looper
 kol_in port kol_in_, giport
-aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kol_re * kmuted, kspeed + kspeed_mod, kreset, gimaxDlyTime
+aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kfeedback, kspeed + kspeed_mod, kreset, gimaxDlyTime
 
 
 
