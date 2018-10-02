@@ -14,5 +14,5 @@ Before lauching it with Csound For Android:
 ## Bugs/TO DO
 1. manual
 2. add more effects
-3. some instruments are not correctly deactivated, see instr 1000 active counter
+
 

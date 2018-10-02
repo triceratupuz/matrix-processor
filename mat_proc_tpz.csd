@@ -1387,7 +1387,7 @@ ktap chnget "tap"
 ktime times
 klasttap init 0
 if ktap == 1 then
-     ; stuff here
+     ;
      if (ktime - klasttap) < 3 then 
          gkbpm = 60 / (ktime - klasttap)
          chnset gkbpm, "bpm"
@@ -1414,14 +1414,12 @@ ksave chnget "save"
 kpreset chnget "presetn" 
 
 kchain init 0
-gkchainleak init 1
 if kload == 1 && changed(kload)== 1 then
 	event "i", -10 - 0.1 - 0.1 * kchain, 0, -1, kpreset, kchain
 	event "i", -50 - 0.1 - 0.1 * kchain, 0, -1, kpreset, kchain
-	event "i", -1000 - 0.1 - 0.1 * kchain + 0.1, 0, -1, kpreset, kchain, gktailtime
+	event "i", -1000 - 0.1 - 0.1 * kchain, 0, -1, kpreset, kchain, gktailtime
               ;advance audio cannels p5
 	kchain = (kchain + 1) % 5
-              gkchainleak = (kchain + 1) % 5
               ;start new programs
 	event "i", 10 + 0.1 + 0.1 * kchain, 0, -1, kpreset, kchain
 	event "i", 50 + 0.1 + 0.1 * kchain, 0, -1, kpreset, kchain
@@ -1457,14 +1455,9 @@ gaoutMix[11] = 0
 galtot = 0
 gartot = 0
 
-;initialize leakage, see instr 90 and 1000 
-galeak init 0
 
 ;init instr
-event_i "i", 10.1, 0, -1, 0, 0
-event_i "i", 50.1, 0, -1, 0, 0
 event_i "i", 52, 0, -1
-;event_i "i", 1000.1, 0, -1, 0, 0
 event_i "i", 90, 0, -1, 0, 0;fixed
 event_i "i", 1001, 0, -1
 event_i "i", 1100, 0, -1
@@ -1624,11 +1617,9 @@ while icol <= 7 do
   irow = 0
   icol = icol + 1
 od
+
 ;next availble memory location
-print indx
-
-
-
+;print indx
 ;MIDI CC CONTROLLERS TO SAVE IN TABLE
 iccidx = 1
 while iccidx <= 4 do
@@ -2122,12 +2113,7 @@ ksemitones = round((kpar1 - 0.5) * 48)
 ktransp = semitone(ksemitones); transpose +- 24
 ksign =(ktransp < 0 ? -1 : 1)
 kfine = semitone(kpar2) * ksign
-/*
-ifftsize  = 1024
-ioverlap  = ifftsize / 4
-iwinsize  = ifftsize
-iwinshape = 1		;von-Hann window
-*/
+
 fftin     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 fftblur   pvscale fftin, ktransp * kfine
 ares      pvsynth fftblur	
@@ -2250,22 +2236,22 @@ ienv4	ftgenonce 0, 0, 131072, 7, 0,32768, 1, 131072-(32768*2), 1, 32768, 0
 ktime_ = kpar1 * 4
 ktime limit ktime_, 0.01, 4
 atime	interp	ktime
-aptr phasor (2/ktime)		;CREATE A MOVING PHASOR THAT WITH BE USED TO 
+aptr phasor (2/ktime) ;CREATE A MOVING PHASOR THAT WITH BE USED TO 
 
-if ktime < 0.2 then			;IF CHUNK TIME IS LESS THAN 0.2... (VERY SHORT)
-    aenv	table3	aptr,ienv4,1		;CREATE AMPLITUDE ENVELOPE 	
+if ktime < 0.2 then ;IF CHUNK TIME IS LESS THAN 0.2... (VERY SHORT)
+    aenv	table3	aptr,ienv4,1 ;CREATE AMPLITUDE ENVELOPE 	
 elseif ktime < 0.4 then 	 
     aenv	table3	aptr,ienv3,1
 elseif ktime < 2 then 	 
     aenv	table3	aptr,ienv2,1
-else					;other longest bracket of delay times
+else ;other longest bracket of delay times
      aenv	table3	aptr,ienv1,1 	
 endif 	
-aptr = aptr * atime	;SCALE PHASOR ACCORDING TO THE LENGTH OF THE DELAY TIME CHOSEN BY THE USER 	
+aptr = aptr * atime ;SCALE PHASOR ACCORDING TO THE LENGTH OF THE DELAY TIME CHOSEN BY THE USER 	
 
-abuffer	delayr	4.01		;CREATE A DELAY BUFFER 	
-    abwd	deltap3	aptr			;READ AUDIO FROM A TAP WITHIN THE DELAY BUFFER
-    afwd	deltap3	atime			;FORWARD DELAY 		
+abuffer	delayr 4.01 ;CREATE A DELAY BUFFER 	
+    abwd	deltap3	aptr ;READ AUDIO FROM A TAP WITHIN THE DELAY BUFFER
+    afwd	deltap3	atime ;FORWARD DELAY 		
 delayw	ain + afwd * kpar2
 
 aout CosSinMix ain, abwd, kpar3
@@ -2388,21 +2374,22 @@ $PARAMT(4)
 denorm ain
 ; four parallel comb filters
 ;kRvt reverb time
+kRvt = kpar1 * 3
 imaxlpt1 init 0.0297
 imaxlpt2 init 0.0371
 imaxlpt3 init 0.0411
 imaxlpt4 init 0.0437
 ;A
-a1L vcomb ain, kpar1, imaxlpt1 * kpar2, imaxlpt1 * 3 
-a2L vcomb ain, kpar1, imaxlpt2 * kpar2, imaxlpt2 * 3 
-a3L vcomb ain, kpar1, imaxlpt3 * kpar2, imaxlpt3 * 3 
-a4L vcomb ain, kpar1, imaxlpt4 * kpar2, imaxlpt4 * 3 
+a1L vcomb ain, kRvt, imaxlpt1 * kpar2, imaxlpt1 * 3 
+a2L vcomb ain, kRvt, imaxlpt2 * kpar2, imaxlpt2 * 3 
+a3L vcomb ain, kRvt, imaxlpt3 * kpar2, imaxlpt3 * 3 
+a4L vcomb ain, kRvt, imaxlpt4 * kpar2, imaxlpt4 * 3 
 asumL sum a1L, a2L, a3L, a4L
 ;B
-a1R vcomb ain, kpar1, imaxlpt1 * kpar2 * .97, imaxlpt1 * 3 
-a2R vcomb ain, kpar1, imaxlpt2 * kpar2 * .96, imaxlpt2 * 3 
-a3R vcomb ain, kpar1, imaxlpt3 * kpar2 * .95, imaxlpt3 * 3 
-a4R vcomb ain, kpar1, imaxlpt4 * kpar2 * .94, imaxlpt4 * 3 
+a1R vcomb ain, kRvt, imaxlpt1 * kpar2 * .97, imaxlpt1 * 3 
+a2R vcomb ain, kRvt, imaxlpt2 * kpar2 * .96, imaxlpt2 * 3 
+a3R vcomb ain, kRvt, imaxlpt3 * kpar2 * .95, imaxlpt3 * 3
+a4R vcomb ain, kRvt, imaxlpt4 * kpar2 * .94, imaxlpt4 * 3 
 asumR sum a1R, a2R, a3R, a4R
 
 ; two allpass filters in series
@@ -2455,12 +2442,7 @@ $PARAMT(4)
 kfrr = kpar1 * kpar1 * 30
 kl = kpar2 * kpar2
 kh = kpar3 * kpar3
-/*
-ifftsize  = 1024
-ioverlap  = ifftsize / 4
-iwinsize  = ifftsize
-iwinshape = 1		;von-Hann window
-*/
+
 fftin     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 
 ifno ftgentmp 0, 0, gifftsize, 7, 0, gifftsize, 1
@@ -2499,12 +2481,6 @@ $PARAMT(3)
 
 kshift_ = (kpar1 - 0.5) * 2
 kshift = kshift_ * kshift_ * 500;-500 + 500 exponential
-/*
-ifftsize = 1024
-ioverlap = ifftsize / 4
-iwinsize = ifftsize
-iwinshape = 1
-*/
 fftin pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 fftblur pvshift fftin, kshift, 20
 ares pvsynth fftblur
@@ -2590,12 +2566,6 @@ endif
 iscala ftgentmp 0, 0, 16, -2, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1
 
 ;lowest f = sr / ifftsize
-/*
-ifftsize  = 1024 * 2
-ioverlap  = ifftsize / 4
-iwinsize  = ifftsize
-iwinshape = 1		;von-Hann window
-*/
 fain  pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 kfr_tracked, kamp pvspitch fain, 0.01
 
@@ -3001,15 +2971,8 @@ else
 endif
 
 ain = (ainL + ainR) / 1.41421
-;ain = (gaoutMix[2] + gaoutMix[3]) / 1.41421
 
-/*
-ifftsize  = 1024;512?
-ioverlap  = ifftsize / 4
-iwinsize  = ifftsize
-iwinshape = 1	;von-Hann window
-*/
-gffreez     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
+gffreez pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 
 endin
 
