@@ -40,7 +40,8 @@ label {
 }
 
 .mixer {
-            column-count:7;
+            column-count:8;
+            font-size:0.91em;
 }
 
 .header {
@@ -116,7 +117,7 @@ input[type=range].vertical {
 	border-radius:8px;
 	box-shadow: inset 0 0 5px #555;
 	backgroud-color: #999;
-	height:6.5%;
+	height:5.9%;
 	width:30%;
 	vertical-alig:middle;
               horizontal-alig:middle;
@@ -173,8 +174,8 @@ input[type=button].bpm {
 }
 
 input[type=button].viuw {
-               width:30%;
-               font-size:0.8em;
+               width:23%;
+               font-size:0.6em;
 }
 
 
@@ -193,6 +194,16 @@ input[type=button].footdh {
                font-size:2.3em;
 }
 
+
+
+#pad {
+	//position:absolute;
+              //left:0px;
+              //top:0px;
+	border:1px solid #111111;
+}
+
+
 </style>
 
 <script type="text/javascript">
@@ -210,14 +221,17 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [6, "powershape", "shape", "hp", "lp", "volume"],
     [8, "slow attack", "threshold", "time", "", ""],
     [9, "compressor", "gain", "threshold", "ratio", ""],
-    [70, "gate", "threshold", "lop-hip", "", ""],
+    [70, "gate", "threshold", "lop-hip", "react", ""],
     [71, "shortEnv", "threshold", "attack", "sustain", "release"],
+    [72, "autofreeze", "threshold", "risetime", "modulation", ""],
     [10, "lowpass", "freq", "Q", "volume", ""],
     [11, "highpass", "freq", "volume", "", ""],
     [12, "evelopLp", "sens", "freq L", "freq H", "Q"],
     [13, "lpf18", "freq", "resonance", "distortion", "dry-wet"],
     [14, "1b parametric", "freq", "band", "gain", ""],
     [15, "condorcab", "scoop", "", "", ""],
+    [16, "wah", "pedal", "gain", "bw", "direct"],
+    [17, "vocal filt", "vocal", "portamento", "dry-wet", ""],
     [19, "4b eq", "bass", "lowmid", "highmid", "high"],
     [20, "tremolo", "freq", "volume", "square", "dry-wet"],
     [60, "tremoloBpm", "step", "qty", "square", "dry-wet"],
@@ -245,6 +259,8 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [55, "harmonizer", "tonality", "interval", "octave", ""]
 ];
 
+//channels
+var channels = 8;
 
 //effect number and names
 var efflist = createEffList(effectsData);
@@ -311,7 +327,8 @@ function createEffPara(effectsData){
 
 
 //current midi CC
-var midiCcActual =[[-1, 0, 0, 0], [-1, 0, 0, 0],[-1, 0, 0, 0],[-1, 0, 0, 0]];
+var midiCcActual =[[-1, 0, 0, 0], [-1, 0, 0, 0],[-1, 0, 0, 0],[-1, 0, 0, 0],
+                                  [-1, 0, 0, 0], [-1, 0, 0, 0],[-1, 0, 0, 0],[-1, 0, 0, 0]];
 
 function setBank(id, value){
     bank = parseInt(value);
@@ -449,10 +466,11 @@ var cc_cha_def =[];
 function createCcChannelNumber(){
     //to be called at init gui
     //see instr 50 for channel sequence
-    var cha__ = ["r0c_n_", "r1c_n_", "r2c_n_", "r3c_n_", "r4c_n_", "r5c_n_", "r6c_n_", "r7c_n_",// "eff_n_",
+    var cha__ = ["r0c_n_", "r1c_n_", "r2c_n_", "r3c_n_", "r4c_n_",
+        "r5c_n_", "r6c_n_", "r7c_n_", "r8c_n_",// "eff_n_",
         "col_n_par1", "col_n_par2", "col_n_par3", "col_n_par4",  "pan_n_", "volmat_n_", "volume_n_"];
     var toappend = "";
-    for(var col = 1; col<=7; col++){
+    for(var col = 1; col<=channels; col++){
         for(var i = 0; i < cha__.length; i++){
             toappend = cha__[i].replace("_n_", col.toString());
             cc_cha_def.push(toappend);
@@ -697,7 +715,7 @@ function channelSetter(channel) {
 function updgui() {
     /*read channels to update gui*/
     var channel = "";
-    var num =7;
+    var num = channels;
     for (col =1; col <= num; col++) {
         //matrix
         for (vsl =0; vsl <= num; vsl++) {
@@ -725,7 +743,7 @@ function updgui() {
      //update midi cc
     var fromcha = 0;
     var el;
-    for(var micc =1; micc<=4; micc++){
+    for(var micc =1; micc<=8; micc++){
         //retrive values from csound
         //update gui
         // update array with current cc definition (midiCcActual)
@@ -752,6 +770,36 @@ function updgui() {
         el = document.getElementById(channel);
         el.value = fromcha;
         midiCcActual[micc-1][3] = fromcha;
+
+    }
+
+    for(var tpcc =1; tpcc <=4; tpcc++){
+        //retrive values from csound
+        //update gui
+        // update array with current trackpad definition (tpParActual)
+        channel = "tp_para" + tpcc.toString();
+        fromcha = csoundApp.getControlChannel(channel);
+        el = document.getElementById(channel);
+        el.value = fromcha;
+        tpParActual[tpcc-1][0] = fromcha;
+
+        channel = "tp_ax" + tpcc.toString();
+        fromcha = csoundApp.getControlChannel(channel);
+        el = document.getElementById(channel);
+        el.value = fromcha;
+        tpParActual[tpcc-1][1] = fromcha;
+
+        channel = "tp_min" + tpcc.toString();
+        fromcha = csoundApp.getControlChannel(channel);
+        el = document.getElementById(channel);
+        el.value = fromcha;
+        tpParActual[tpcc-1][2] = fromcha;
+
+        channel = "tp_max" + tpcc.toString();
+        fromcha = csoundApp.getControlChannel(channel);
+        el = document.getElementById(channel);
+        el.value = fromcha;
+        tpParActual[tpcc-1][3] = fromcha;
 
     }
 }
@@ -905,14 +953,16 @@ function panic(id) {
 }
 
 
-function toggler(id1, id2, id3) {
+function toggler(id1, id2, id3, id4) {
     /*toggle divs views*/
     var e1 = document.getElementById(id1);
     var e2 = document.getElementById(id2);
     var e3 = document.getElementById(id3);
+    var e4 = document.getElementById(id4);
     e1.style.display = 'block';
     e2.style.display = 'none';
     e3.style.display = 'none';
+    e4.style.display = 'none';
 }
 
 
@@ -926,6 +976,8 @@ function loada() {
     elop.style.display = 'none';
     var elom = document.getElementById('midiw');
     elom.style.display = 'none';
+    var elot = document.getElementById('trackpad');
+    elot.style.display = 'none';
 }
 
 
@@ -1008,6 +1060,59 @@ function updChIndicator() {
 
 
 
+
+//trackpad
+//--------------------------------------------------------------------------------------------------------------
+
+
+var tpParActual = [[-1, 0, 0, 0], [-1, 0, 0, 0], [-1, 0, 0, 0], [-1, 0, 0, 0]];
+
+function createTpController(numba){
+    document.write('<select id="tp_para' + numba + '" onchange="manageTpSettings(id, ' + numba + ', value)">');
+    //must send value to csound to memorize and save in javascript for full control
+    document.write('<option value="-1">off</option>');
+    for(var i = 0; i< cc_cha_def.length; i++){
+        document.write('<option value="' + i + '">' + cc_cha_def[i] + '</option>');
+    }
+    document.write('</select><br>');
+
+    document.write('<select id="tp_ax' + numba + '" onchange="manageTpSettings(id, ' + numba + ', value)">');
+    //must send value to csound to memorize and save in javascript for full control
+    document.write('<option value="0">X</option>');
+    document.write('<option value="1">Y</option>');
+    document.write('</select><br>');
+
+    document.write('<input type="number" class="head" min=0 max=1 step="0.001" value=0 id="tp_min'+ numba + '" onchange="manageTpSettings(id, ' + numba + ', value)">min<br>');
+    document.write('<input type="number" class="head" min=0 max=1 step="0.001" value=0 id="tp_max'+ numba + '" onchange="manageTpSettings(id, ' + numba + ', value)">max<br>');
+}
+
+function manageTpSettings(id, ccguin, value){
+    // trackpad contollers update
+    //send to csound
+    sliderDo(id, value);
+    //update javascript midiCcActual[] for control after midi message
+    var writeToJpar = 0;
+    if (id.includes("tp_para")){
+        writeToJpar = 0;
+    } else if (id.includes("tp_ax")){
+        writeToJpar = 1;
+    } else if (id.includes("tp_min")){
+        writeToJpar = 2;
+    } else if (id.includes("tp_max")){
+        writeToJpar = 3;
+    }
+    tpParActual[ccguin-1][writeToJpar] = parseFloat(value);
+}
+
+
+
+
+
+
+
+//initialize
+//--------------------------------------------------------------------------------------------------------------
+
 window.onload = function(){loada();};
 
 //Channel initializations
@@ -1024,9 +1129,10 @@ window.onload = function(){loada();};
 <input type="number" class="head" min=0 max=20 step="any" value=0 id="tailtime" onchange="numberDoLimit(id, value, 0, 20)">
 <label>Tail:</label><label id="upch">0</label>
 
-<input type="button" class='viuw' value="matrix" id="matr" onclick="toggler('matrix', 'loopers', 'midiw')">
-<input type="button" class='viuw' value="midi" id="miid" onclick="toggler('midiw', 'loopers', 'matrix')">
-<input type="button" class='viuw' value="looper" id="looo" onclick="toggler('loopers', 'matrix', 'midiw')">
+<input type="button" class='viuw' value="matrix" id="matr" onclick="toggler('matrix', 'loopers', 'midiw', 'trackpad')">
+<input type="button" class='viuw' value="midi" id="miid" onclick="toggler('midiw', 'loopers', 'matrix', 'trackpad')">
+<input type="button" class='viuw' value="tpad" id="tpad" onclick="toggler('trackpad', 'midiw', 'loopers', 'matrix')">
+<input type="button" class='viuw' value="looper" id="looo" onclick="toggler('loopers', 'matrix', 'midiw', 'trackpad')">
 
 <select id="record" onchange="selectDoTime(id)">
                                       <option value="0">mixing</option>
@@ -1064,7 +1170,7 @@ window.onload = function(){loada();};
 <script>
 //generate mixer gui
 document.write('<div id="matrix" class="mixer">');
-var num =7;
+var num =channels;
 for (div =1; div <= num; div++) {
     //document.write('<h1>' + div+'</h1>');
     document.write('channel '+div+'<br>');
@@ -1131,6 +1237,15 @@ createGuiControllerCC(3);
 createGuiControllerCC(4);
 </script>
 </div>
+<div id="midiww">
+<script>
+createGuiControllerCC(5);
+createGuiControllerCC(6);
+createGuiControllerCC(7);
+createGuiControllerCC(8);
+</script>
+</div>
+
 <br><br>
 fixed midi mapping<br>
 PC 0 - 99 : matrix preset 0 to 99<br>
@@ -1147,6 +1262,146 @@ for (var fixcc = 0; fixcc < mixerdefs.length; fixcc++){
 <br><br>
 Incoming midi messagess:
 <div id="log_in">log here</div>
+</div>
+
+
+
+
+<div id="trackpad">
+<br>
+<div>
+	<canvas id="pad"></canvas>
+</div>
+Trackpad controls
+<div id="midiww">
+
+
+
+<script>
+var canvasW = window.innerWidth* 0.98;
+var canvasH = canvasW;
+
+var pad = document.getElementById("pad");
+var ctx_pad = pad.getContext("2d");
+pad.width = canvasW;
+pad.height = canvasH;
+
+var left_at = findTopLeft("pad")[0];
+var top_at = findTopLeft("pad")[1];
+
+function findTopLeft(element) {
+  var rec = document.getElementById(element).getBoundingClientRect();
+  return [rec.left + window.scrollX, rec.top + window.scrollY];
+} 
+
+
+function onResaiz() {
+    canvasW = window.innerWidth * 0.98;
+    canvasH = canvasW
+    var top_coords = findTopLeft("pad");
+    top_at = top_coords[1];
+    left_at = top_coords[0];
+    pad.width = canvasW;
+    pad.height = canvasH;
+}
+
+
+
+onResaiz();
+
+//create gui items
+createTpController(1);
+createTpController(2);
+createTpController(3);
+createTpController(4);
+
+
+
+function drawTp(e) {
+    var touchlist = e.changedTouches;
+    top_at = findTopLeft("pad")[1];
+    left_at = findTopLeft("pad")[0];
+
+    var x = (touchlist[0].clientX - left_at) / pad.width;
+    var y = (touchlist[0].clientY - top_at) / pad.height;
+
+    ctx_pad.clearRect(0, 0, pad.width, pad.height);
+    ctx_pad.strokeStyle = "red";
+    ctx_pad.lineWidth = 6;
+  
+    if (x >= 0 && x <= 1 && y >= 0 && y <= 1) {
+         //vertical draw
+         ctx_pad.beginPath();
+         ctx_pad.moveTo(x * pad.width - ctx_pad.lineWidth / 2, 0);
+         ctx_pad.lineTo(x * pad.width - ctx_pad.lineWidth / 2, pad.height);
+         ctx_pad.stroke();
+          //horizontal draw
+         ctx_pad.beginPath();
+         ctx_pad.moveTo(0 , y * pad.height);
+         ctx_pad.lineTo(pad.width, y * pad.height);
+         ctx_pad.stroke();
+         //value manager
+        for(var ctp = 0; ctp < 4; ctp++){
+            var cnel = cc_cha_def[tpParActual[ctp][0]];
+            if (cnel != "off") {
+                if(tpParActual[ctp][1] == 0) {
+                   tpCdispatch(ctp, x);
+                } else {
+                   tpCdispatch(ctp, 1.0 - y);
+                }
+            }
+        }
+    }
+}
+
+
+
+
+function tpCdispatch(tpparn, value){
+    //send value to cc control channel
+    var channel = cc_cha_def[tpParActual[tpparn][0]];
+    var low = tpParActual[tpparn][2];
+    var high = tpParActual[tpparn][3];
+    var val = 0.0;
+    if (low < high) {
+        val = low + (high- low) * value;
+    } else {
+        val = low - (low - high) * value;
+    }
+    //correct value if above 0 or 1
+    if (val < 0) {
+        val =0.0;
+    } else if (val>1) {
+         val = 1.0;
+    }
+    csoundApp.setControlChannel(channel, val);
+    //update gui
+    var el = document.getElementById(channel);
+    el.value = val;
+}
+
+
+
+
+//Bind Events
+window.addEventListener("resize", onResaiz);
+
+pad.addEventListener("touchstart", function(e) {
+    drawTp(e);
+   // sendValToCs();
+    e.preventDefault();
+}, false);
+
+pad.addEventListener("touchmove" , function(e) {
+    drawTp(e);
+    //sendValToCs();
+    e.preventDefault();
+}, false);
+
+
+
+</script>
+</div>
 </div>
 
 
@@ -1331,11 +1586,13 @@ gScurDir init "$GSCURDIR"
 ;MACROS see options
 #include "macros.txt"
 
+;number of channels
+gichannels = 8
 
 
 ;matrix audio arrays
-ga_in[][] init 5,8
-ga_out[][] init 5,8
+ga_in[][] init 5,9
+ga_out[][] init 5,9
 
 
 ;outputs for direct, matrix, looper1, looper2 in instr 1004
@@ -1347,15 +1604,41 @@ gkbpm init 60
 
 
 ;table to store gui values
-giptab1 ftgen 5, 0, 128, -2, 0
-giptab2 ftgen 6, 0, 128, -2, 0
-giptab3 ftgen 7, 0, 128, -2, 0
-giptab4 ftgen 8, 0, 128, -2, 0
-giptab5 ftgen 9, 0, 128, -2, 0
+giptab1 ftgen 5, 0, 256, -2, 0
+giptab2 ftgen 6, 0, 256, -2, 0
+giptab3 ftgen 7, 0, 256, -2, 0
+giptab4 ftgen 8, 0, 256, -2, 0
+giptab5 ftgen 9, 0, 256, -2, 0
 
 ;preset0 = mute matrix
-giempty ftgen 10, 0, 128, -2, 0
-;tables from 11 to 137 are user by presets
+giempty ftgen 10, 0, 256, -2, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;0-9
+    0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0,;10
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;20
+    0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0,;30
+    0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0,;40
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;50
+    0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;70
+    0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;100
+    0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;120
+    0, 0, 0, 0.5, 0, 0, -1, 0, 0, 0,
+    -1, 0, 0, 0, -1, 0, 0, 0, -1, 0,;140
+    0, 0, -1, 0, 0, 0, -1, 0, 0, 0,
+    -1, 0, 0, 0, -1, 0, 0, 0, -1, 0,;160
+    0, 0, -1, 0, 0, 0, -1, 0, 0, 0,
+    -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,;180
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;200
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;220
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;240
+    0, 0, 0, 0, 0, 0, 0
+;tables from 11 to 137 are for user presets
 
 giSine ftgen 138, 0, 8192, 10, 1
 giTriangle ftgen 139, 0, 8192, 7, 0, 2048, 1, 4096, -1, 2048, 0
@@ -1474,11 +1757,11 @@ kcol = 1
 krow = 0
 kindx   = 0
 
-while kcol <= 7 do
+while kcol <= gichannels do
 
   ;read Matrix mixer
   krow = 0
-  while krow <= 7 do
+  while krow <= gichannels do
     Smm sprintfk "r%dc%d", krow, kcol
     kval chnget Smm
     tablew kval, kindx, 5 + p5
@@ -1529,7 +1812,7 @@ od
 
 ;MIDI CC CONTROLLERS TO SAVE IN TABLE
 kccidx = 1
-while kccidx <= 4 do
+while kccidx <= 8 do
     SccmidiC sprintfk "ccmidiC%d", kccidx
     kccmidiC chnget SccmidiC
     tablew kccmidiC, kindx, 5 + p5
@@ -1553,6 +1836,33 @@ while kccidx <= 4 do
     kccidx = kccidx + 1
 od
 
+
+;TRACKPAD CONTROLLERS TO SAVE IN TABLE
+ktpidx = 1
+while ktpidx <= 4 do
+    Stp_para sprintfk "tp_para%d", ktpidx
+    ktp_para chnget Stp_para
+    tablew ktp_para, kindx, 5 + p5
+    kindx = kindx + 1
+
+    Stp_ax sprintfk "tp_ax%d", ktpidx
+    ktp_ax chnget Stp_ax
+    tablew ktp_ax, kindx, 5 + p5
+    kindx = kindx + 1
+
+    Stp_min sprintfk "tp_min%d", ktpidx
+    ktp_min chnget Stp_min
+    tablew ktp_min, kindx, 5 + p5
+    kindx = kindx + 1
+
+    Stp_max sprintfk "tp_max%d", ktpidx
+    ktp_max chnget Stp_max
+    tablew ktp_max, kindx, 5 + p5
+    kindx = kindx + 1
+
+    ktpidx = ktpidx + 1
+od
+
 endin
 
 
@@ -1568,11 +1878,11 @@ icol = 1
 irow = 0
 indx   = 0
 
-while icol <= 7 do
+while icol <= gichannels do
 
   ;read Matrix mixer
   irow = 0
-  while irow <= 7 do
+  while irow <= gichannels do
     Smm sprintf "r%dc%d", irow, icol
     ival tab_i indx, 5 + p5
     chnset ival, Smm
@@ -1622,7 +1932,7 @@ od
 ;print indx
 ;MIDI CC CONTROLLERS TO SAVE IN TABLE
 iccidx = 1
-while iccidx <= 4 do
+while iccidx <= 8 do
     SccmidiC sprintf "ccmidiC%d", iccidx
     iccmidiC tab_i indx, 5 + p5
     chnset iccmidiC, SccmidiC
@@ -1646,6 +1956,33 @@ while iccidx <= 4 do
     iccidx = iccidx + 1
 od
 
+;TRACKPAD CONTROLLERS TO SAVE IN TABLE
+itpidx = 1
+while itpidx <= 4 do
+    Stp_para sprintf "tp_para%d", itpidx
+    itp_para tab_i indx, 5 + p5
+    chnset itp_para, Stp_para
+    indx = indx + 1
+
+    Stp_ax sprintf "tp_ax%d", itpidx
+    itp_ax tab_i indx, 5 + p5
+    chnset itp_ax, Stp_ax
+    indx = indx + 1
+
+    Stp_min sprintf "tp_min%d", itpidx
+    itp_min tab_i indx, 5 + p5
+    chnset itp_min, Stp_min
+    indx = indx + 1
+
+    Stp_max sprintf "tp_max%d", itpidx
+    itp_max tab_i indx, 5 + p5
+    chnset itp_max, Stp_max
+    indx = indx + 1
+
+    itpidx = itpidx + 1
+od
+
+
 
 $EFFSELECT(1)
 $EFFSELECT(2)
@@ -1654,6 +1991,7 @@ $EFFSELECT(4)
 $EFFSELECT(5)
 $EFFSELECT(6)
 $EFFSELECT(7)
+$EFFSELECT(8)
 ;turnoff
 ;extend to kill running effects
 xtratim 0.02
@@ -1667,6 +2005,7 @@ if krel ==1 && changed(krel) ==1 then
     event "i", -1 * kinprev5, giport, -1, 5, p5  
     event "i", -1 * kinprev6, giport, -1, 6, p5  
     event "i", -1 * kinprev7, giport, -1, 7, p5  
+    event "i", -1 * kinprev8, giport, -1, 8, p5  
 endif
 endin
 
@@ -1674,8 +2013,8 @@ endin
 
 instr 52;load presets at startup
 indx  = 1
-while indx < 91 do
-  giiiift ftgen 10 + indx, 0, 128, -2, 0
+while indx < 100 do
+  giiiift ftgen 10 + indx, 0, 256, -2, 0
   Sfile sprintf "save/matprocSave%d.txt", indx
   Saddress strcat gScurDir,  Sfile
   ftload Saddress, 1, 10 + indx
@@ -1709,6 +2048,7 @@ ga_in[4][0] = ain + galoop_in_ma
 ga_in[5][0] = ain + galoop_in_ma
 ga_in[6][0] = ain + galoop_in_ma
 ga_in[7][0] = ain + galoop_in_ma
+ga_in[8][0] = ain + galoop_in_ma
 ;write to output mixer
 gaoutMix[0] = ain
 gaoutMix[1] = ain
@@ -1803,7 +2143,8 @@ krms rms ain
 kswing limit krms, 0, 1
 kshapeamt = 1 - ((kpar1 * 0.75) - 0.25 * kpar1 * kswing)
 alimin AtanLimit ain
-ashap powershape alimin, kshapeamt
+ashapa powershape alimin, kshapeamt
+ashap powershape ashapa, kshapeamt
 ashhp buthp ashap, kpar2 * kpar2 * 20000
 ashlp butlp ashhp, kpar3 * kpar3 * 20000
 aoutl AtanLimit ashlp
@@ -1905,7 +2246,8 @@ $PARAMT(4)
 ;kpar3 - distortion
 ;kpar4 - dry - wet
 ares lpf18 ain, kpar1 * kpar1 * 10000, kpar2 * 1.1, kpar3
-aout CosSinMix ain, ares, kpar4
+abal balance ares, ain
+aout CosSinMix ain, abal, kpar4
 $OUTMIXT
 endin
 
@@ -1941,6 +2283,94 @@ ahiglp butlp ahighp, 3000 + 1000 * kpar1
 aout = alowlp * ampdbfs(-4 - 2  * kpar1) + ahiglp + (ascooplow + ascoophigh) * ampdbfs(-8 - 2   * kpar1)
 $OUTMIXT
 endin
+
+
+
+instr 116;wha
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+;freq range of pedal 450- 1k6 circa, gain 18 db
+afil butbp ain, 400 + kpar1 * (1700 - 400), (0.01 + kpar3) * (400 + kpar1 * (1700 - 400))
+afilg = afil * ampdbfs(kpar2 * 20)
+aout balance afilg + ain * kpar4, ain
+$OUTMIXT
+endin
+
+
+
+instr 117;vocal filter
+$INMIXT
+$PARAMT(1)
+$PARAMT(2)
+$PARAMT(3)
+$PARAMT(4)
+
+kindex = round(kpar1 * 4.3)
+kport = kpar2 * 2
+if1 ftgentmp 0, 123, 5, -2, 650, 400, 290, 400, 350
+kf1_ tab kindex, if1
+if2 ftgentmp 0, 123, 5, -2, 1080, 1700, 1870, 800, 600
+kf2_ tab kindex, if2
+if3 ftgentmp 0, 123, 5, -2, 2650, 2600, 2800, 2600, 2700
+kf3_ tab kindex, if3
+if4 ftgentmp 0, 123, 5, -2, 2900, 3200, 3250, 2800, 2900
+kf4_ tab kindex, if4
+if5 ftgentmp 0, 123, 5, -2, 3250, 3580, 3540, 3000, 3300
+kf5_ tab kindex, if5
+kf1 portk kf1_, kport
+kf2 portk kf2_, kport
+kf3 portk kf3_, kport
+kf4 portk kf4_, kport
+kf5 portk kf5_, kport
+
+ib1 ftgentmp 0, 123, 5, -2, 80, 70, 40, 70, 40
+kb1_ tab kindex, ib1
+ib2 ftgentmp 0, 123, 5, -2, 90, 80, 90, 80, 60
+kb2_ tab kindex, ib2
+ib3 ftgentmp 0, 123, 5, -2, 120, 100, 100, 100, 100
+kb3_ tab kindex, ib3
+ib4 ftgentmp 0, 123, 5, -2, 130, 120, 120, 130, 120
+kb4_ tab kindex, ib4
+ib5 ftgentmp 0, 123, 5, -2, 140, 120, 120, 135, 120
+kb5_ tab kindex, ib5
+kb1 portk kb1_, kport
+kb2 portk kb2_, kport
+kb3 portk kb3_, kport
+kb4 portk kb4_, kport
+kb5 portk kb5_, kport
+
+ig1 ftgentmp 0, 123, 5, -2, 0, 0, 0, 0, 0
+kg1_ tab kindex, ig1
+ig2 ftgentmp 0, 123, 5, -2, -6, -14, -15, -10, -20
+kg2_ tab kindex, ig2
+ig3 ftgentmp 0, 123, 5, -2, -7, -12, -18, -12, -17
+kg3_ tab kindex, ig3
+ig4 ftgentmp 0, 123, 5, -2, -8, -14, -20, -12, -14
+kg4_ tab kindex, ig4
+ig5 ftgentmp 0, 123, 5, -2, -22, -20, -30, -26, -26
+kg5_ tab kindex, ig5
+kg1 portk kg1_, kport
+kg2 portk kg2_, kport
+kg3 portk kg3_, kport
+kg4 portk kg4_, kport
+kg5 portk kg5_, kport
+
+af1 butbp ain, kf1, kb1
+af2 butbp ain, kf2, kb2
+af3 butbp ain, kf3, kb3
+af4 butbp ain, kf4, kb4
+af5 butbp ain, kf5, kb5
+
+aout_ = af1 * ampdbfs(kg1) + af2 * ampdbfs(kg2) + af3 * ampdbfs(kg3) + af4 * ampdbfs(kg4) + af5 * ampdbfs(kg5)
+aoutb balance aout_, ain
+
+aout CosSinMix ain, aoutb, kpar3
+$OUTMIXT
+endin
+
 
 
 
@@ -2010,7 +2440,7 @@ $PARAMT(4)
 ;kpar3 - feedback
 ;kpar4 - dry - wet
 iord init 128; 1 - 4999
-kmod oscili 0.49, kpar1 * kpar1 * 2, giSine
+kmod oscili 0.49, kpar1 * kpar1 * 20, giSine
 kmod = kmod + 0.51
 ares phaser1 ain, 40 + kpar2 * kpar2 * 10000 * kmod, iord, kpar3
 aout CosSinMix ain, ares, kpar4
@@ -2057,8 +2487,8 @@ $PARAMT(4)
 
 ares = ain
 kcrossover = 20+ kpar1 * kpar1 * 8000
-kfreqL = kpar2 * kpar2 * kpar2 * 80
-kfreqH = kpar3 * kpar3 * kpar2 * 80
+kfreqL = kpar2 * kpar2 * 160
+kfreqH = kpar3 * kpar3 * 160
 kDopDep= kpar4 * 2
 iMaxDelay = 4
 
@@ -2318,15 +2748,25 @@ aleft    alpass  ajunk, 1.01, .07
 ajunk    alpass  ain, 1.5, 0.2
 aright   alpass  ajunk, 1.33, .05
 
-kdel1_    randi   .01 * kpar1, 0.5, .666
-kdel1 portk kdel1_, kpar1 / 0.47
+reset:
+imod = i(kpar1)
+kdel1_ randi 0.01 * kpar1, 0.05 + 3 * imod, 0.666
+kdel2_ randi 0.01 * kpar1, 0.047 + 2.9 * imod, 0.777
+rireturn
+
+; reinit 
+if changed(kpar1) == 1 then
+    reinit reset
+endif
+
+
+kdel1 portk kdel1_, 1 / (0.05 + 3 * kpar1)
 kdel1    =       kdel1 + 0.01
 addl1    delayr  .3
 afeed1   deltapi kdel1
     delayw afeed1 * kpar1 + aleft
 
-kdel2_    randi   .01 * kpar1, 0.47, .777
-kdel2 portk kdel2_, kpar1 / 0.51
+kdel2 portk kdel2_, 1 / (0.047 + 3 * kpar1)
 kdel2    =       kdel2 + 0.01
 addl2    delayr  .3
 afeed2   deltapi kdel2
@@ -2509,7 +2949,7 @@ awin = ain * amod
 abuf	delayr	1
 adel 	deltap3	(0.010 + kpar1 * 0.040) * kpar2
 	delayw	awin + adel * kpar3
-;aout = adel * kpar4 + ain * (1 - kpar4)
+
 aout CosSinMix ain, awin + adel, kpar4
 $OUTMIXT
 endin
@@ -2535,6 +2975,7 @@ aout wguide1 ain, kfrq, kcutoff, kfeed
 aout CosSinMix ain, aout, kpar4
 $OUTMIXT
 endin 
+
 
 
 
@@ -2670,6 +3111,7 @@ instr 170;gate
 $INMIXT
 $PARAMT(1)
 $PARAMT(2)
+$PARAMT(3)
 
 reset:
 ihalftab = 16384
@@ -2703,11 +3145,11 @@ endif
 aout = 0
 if kpar2 > 0.5 then
     kouth_ downsamp aouth
-    kouth port kouth_, 0.15
+    kouth portk kouth_, 0.001 + 0.15 * kpar3
     aout = kouth * ain
 else
     koutl_ downsamp aoutl
-    koutl port koutl_, 0.15
+    koutl portk koutl_, 0.001 + 0.15 * kpar3
     aout = koutl * ain
 endif
 
@@ -2762,21 +3204,50 @@ endin
 
 
 
+instr 172
+$INMIXT
+;threshold
+$PARAMT(1)
+;risetime
+$PARAMT(2)
+;modul
+$PARAMT(3)
+
+fanal pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
+
+kfreeza init 0
+knext init 0
+k_t_rms_ max_k ain, 1, 1
+k_t_rms port k_t_rms_, 0.1
+ktrig trigger k_t_rms, kpar1 * kpar1, 0
+if knext == 1 then
+    kfreeza = 1
+    knext = 0
+endif
+if ktrig == 1 then
+    kfreeza = 0
+    knext = 1
+endif
+
+kscal jspline 0.0594 * 0.5 * kpar3, 0.1, 0.1 + 3 * kpar3
+kenv portk kfreeza, 0.01 + kpar2 * kfreeza
+
+fsig pvsfreeze fanal, kfreeza, kfreeza
+fmodu pvscale fsig, 1 - kscal
+fmodd pvscale fsig, 1 +  kscal
+aoutu pvsynth fmodu
+aoutd pvsynth fmodd
+aout = (aoutu + aoutd) * kenv / 1.41
+
+$OUTMIXT
+endin
+
 
 instr 1000;output
 ;release with tails - for audio output
 xtratim 2 * giport + p6
 
-;output router to inputs
-$FEEDINT(1)
-$FEEDINT(2)
-$FEEDINT(3)
-$FEEDINT(4)
-$FEEDINT(5)
-$FEEDINT(6)
-$FEEDINT(7)
-
-;pan and output
+;output router to inputs/pan and output
 $OUTLINET(1)
 $OUTLINET(2)
 $OUTLINET(3)
@@ -2784,8 +3255,9 @@ $OUTLINET(4)
 $OUTLINET(5)
 $OUTLINET(6)
 $OUTLINET(7)
-almat = al1 + al2 + al3 + al4 + al5 + al6 + al7
-armat = ar1 + ar2 + ar3 + ar4 + ar5 + ar6 + ar7
+$OUTLINET(8)
+almat = al1 + al2 + al3 + al4 + al5 + al6 + al7  + al8
+armat = ar1 + ar2 + ar3 + ar4 + ar5 + ar6 + ar7 + ar8
 
 ;audio out, tails
 gaoutMix[2] AtanLimit gaoutMix[2] + almat

@@ -1,6 +1,6 @@
 
 #define EFFSELECT(N) #
-ieffind = 8 + ($N -1) * 16
+ieffind = 9 + ($N -1) * 17
 ieffbeg$N tab_i ieffind, p5+5
 iinprev$N = 100.1 + 0.1 * p5 +  0.01 * $N + ieffbeg$N 
 event_i "i", iinprev$N , 0, -1, $N, p5, i(gktailtime)
@@ -23,9 +23,9 @@ endif
 
 
 #define INMIXT(N) #
-;0-15
+print p1
 irelease = p6
-kcol init (p4 -1) * 16
+kcol init (p4 -1) * 17
 kdir_ tab kcol, 5 + p5
 kch1_ tab kcol+1, 5 + p5
 kch2_ tab kcol+2, 5 + p5
@@ -34,6 +34,7 @@ kch4_ tab kcol+4, 5 + p5
 kch5_ tab kcol+5, 5 + p5
 kch6_ tab kcol+6, 5 + p5
 kch7_ tab kcol+7, 5 + p5 
+kch8_ tab kcol+8, 5 + p5 
 
 kdir port kdir_ * kdir_ * 4,  giport
 kch1 port kch1_ * kch1_ * 4,  giport
@@ -43,6 +44,7 @@ kch4 port kch4_ * kch4_ * 4,  giport
 kch5 port kch5_ * kch5_ * 4,  giport
 kch6 port kch6_ * kch6_ * 4,  giport
 kch7 port kch7_ * kch7_ * 4,  giport
+kch8 port kch8_ * kch8_ * 4,  giport
 
 xtratim 2 * giport + irelease
 krel init 0 
@@ -61,31 +63,30 @@ kenv = kmp1 * kmp3
 kenvr = kmp1 * kmp2
 done:
 
-ain AtanLimit kenv * (ga_in[p5][0] * kdir) + kenvr * (ga_in[p5][1] * kch1 + ga_in[p5][2] * kch2 + ga_in[p5][3] * kch3 + ga_in[p5][4] * kch4 + ga_in[p5][5] * kch5 + ga_in[p5][6] * kch6 + ga_in[p5][7] * kch7)
+ain AtanLimit kenv * (ga_in[p5][0] * kdir) + kenvr * (ga_in[p5][1] * kch1 + ga_in[p5][2] * kch2 + ga_in[p5][3] * kch3 + ga_in[p5][4] * kch4 + ga_in[p5][5] * kch5 + ga_in[p5][6] * kch6 + ga_in[p5][7] * kch7 + ga_in[p5][8] * kch8)
 #
 
 #define OUTMIXT #
-kouv_ tab kcol+14, 5+p5 
-kouv port kouv_ * kouv_ * 4, giport
 ga_out[p5][p4] = kenvr * aout
 #
 
 #define PARAMT(N) #
-kparind_$N init (p4 -1) * 16 + 8 +$N
+kparind_$N init (p4 -1) * 17 + 9 + $N
 kpar_$N tab kparind_$N, 5+p5
 kpar$N port kpar_$N, giport
 #
 
-#define FEEDINT(N) #
-indmatv$N init 16 * ($N -1) + 14
+
+#define OUTLINET(N) #
+;matrix feedback
+indmatv$N init 17 * ($N -1) + 15
 kmatv_$N tab k(indmatv$N), 5 + p5
 kmatv$N port kmatv_$N * kmatv_$N * kmatv_$N * 8, giport
 ga_in[p5][$N] = ga_out[p5][$N] * kmatv$N; * kenvr
-#
 
-#define OUTLINET(N) #
-ipindpan$N init 16 * ($N -1) + 13
-ipindvol$N init 16 * ($N-1) + 15
+;pan an output
+ipindpan$N init 17 * ($N -1) + 14
+ipindvol$N init 17 * ($N-1) + 16
 kpan_$N tab k(ipindpan$N), 5 + p5
 kvol_$N tab k(ipindvol$N), 5 + p5
 kpan$N port kpan_$N, giport
