@@ -23,7 +23,7 @@ endif
 
 
 #define INMIXT(N) #
-print p1
+;print p1
 irelease = p6
 kcol init (p4 -1) * 17
 kdir_ tab kcol, 5 + p5
@@ -70,10 +70,17 @@ ain AtanLimit kenv * (ga_in[p5][0] * kdir) + kenvr * (ga_in[p5][1] * kch1 + ga_i
 ga_out[p5][p4] = kenvr * aout
 #
 
-#define PARAMT(N) #
+
+#define PARAMTP(N'TI) #
 kparind_$N init (p4 -1) * 17 + 9 + $N
 kpar_$N tab kparind_$N, 5+p5
-kpar$N port kpar_$N, giport
+kpar$N port kpar_$N, $TI
+#
+
+
+#define PARAMTNP(N) #
+kparind_$N init (p4 -1) * 17 + 9 + $N
+kpar_$N tab kparind_$N, 5+p5
 #
 
 

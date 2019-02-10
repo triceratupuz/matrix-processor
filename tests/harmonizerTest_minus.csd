@@ -31,7 +31,7 @@ kinterval_m tab int(kpar2 * 6.1), iintevals
 
 ;octave
 ksemit = int((kpar3 - 0.5) * 48)
-koctave = semitone(ksemit
+koctave = semitone(ksemit)
 
 iscala ftgentmp 0, 0, 16, -2, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1
 

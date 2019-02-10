@@ -219,6 +219,7 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [4, "abs", "abs", "direct", "", ""],
     [5, "degrader", "fold", "bits", "dry-wet", ""],
     [6, "powershape", "shape", "hp", "lp", "volume"],
+    [7, "squarer", "pre", "slope", "lowpass", "volume"],
     [8, "slow attack", "threshold", "time", "", ""],
     [9, "compressor", "gain", "threshold", "ratio", ""],
     [70, "gate", "threshold", "lop-hip", "react", ""],
@@ -276,13 +277,6 @@ var maxDlyTime = 120;
 var bank = 0;
 var preset = 0;
 
-var pclowloopers = 100;//first looper PC
-var loopersqty = 4;
-
-var pclowfreezers = 105;//first freezer PC
-var freezersqty = 3;
-
-var pctaptempo = 127;//tap tempo PC
 
 //output mixer
 //id slider, id vumeter, name displayed, midi cc
@@ -296,8 +290,18 @@ var mixerdefs = [["mix_ma", "matrixoutv", "Matrix", 100],
                               ["mix_l4",  "loop4outv", "Loop4", 107]]
 
 
-var leak = 0;//leak tails between programs
-csoundApp.setControlChannel("leak", 0);
+//midi configuration
+var fixedmididefs = [["freez1", 114, 176],
+                ["freez2", 115, 176],
+                ["freez3", 116, 176],
+                ["looprec1", 110, 176],
+                ["looprec2", 111, 176],
+                ["looprec3", 112, 176],
+                ["looprec4", 113, 176],
+                ["tap", 117, 176]];
+
+
+
 
 //--------------------------------------------------------------------------------------------------------------
 
@@ -330,6 +334,7 @@ function createEffPara(effectsData){
 var midiCcActual =[[-1, 0, 0, 0], [-1, 0, 0, 0],[-1, 0, 0, 0],[-1, 0, 0, 0],
                                   [-1, 0, 0, 0], [-1, 0, 0, 0],[-1, 0, 0, 0],[-1, 0, 0, 0]];
 
+
 function setBank(id, value){
     bank = parseInt(value);
     csoundApp.setControlChannel("presetn", bank * 10 + preset);
@@ -341,6 +346,8 @@ function setBank(id, value){
     document.getElementById("load").style.background="#ff0000";
 }
 
+
+
 function setPresN(id, value){
     preset = parseInt(value);
     csoundApp.setControlChannel("presetn", bank * 10 + preset);
@@ -351,6 +358,8 @@ function setPresN(id, value){
     document.getElementById(id).style.background="#ff0000";
     document.getElementById("load").style.background="#ff0000";
 }
+
+
 
 function loader(id) {
     //start loading preset and update gui
@@ -367,12 +376,13 @@ function loader(id) {
 function loaderMidi(message) {
     //start loading and update gui by midi
     var data = message.data;
+    var msgtype = data[0];
+    var msgnumber = data[1];
     writeToMidiLog('log_in', data);
     //csoundApp.setControlChannel("testamidi", data[1]);
     var midipc = data[1];
-    if (data[0] == 192 && data[1] < 100) {
+    if (msgtype == 192 && msgnumber < 100) {
         //Change effects program
-        //csoundApp.setControlChannel("testamidi", data[1]);
         preset = midipc % 10;
         bank = (midipc - preset) / 10;
         csoundApp.setControlChannel("midib", preset);
@@ -391,17 +401,21 @@ function loaderMidi(message) {
 	csoundApp.setControlChannel("load", 0.0);
               document.getElementById("load").style.background = "#bbbbbb";
         }, 200);//delay of 200 ms necessary to allow javascript minimum time
-    } else if (data[0] == 192 && data[1] >= pclowloopers && data[1] < (pclowloopers + loopersqty)) {
-        //Start-stop loopers
-        var idloop = "looprec" + (data[1] - (pclowloopers - 1)).toString();
-        loopPlayRec(idloop);
-    } else if (data[0] == 192 && data[1] >= pclowfreezers && data[1] < (pclowfreezers + freezersqty)) {
-        //Start-stop freezers
-        var idfreez = "freez" + (data[1] - (pclowfreezers - 1)).toString();
-        freezPlayRec(idfreez);
-    } else if (data[0] == 192 && data[1] == pctaptempo){
-        set_tap("tap");
+    } 
+
+    for (var readmidit = 0; readmidit < fixedmididefs.length; readmidit++) {
+        if (fixedmididefs[readmidit][2] == msgtype && fixedmididefs[readmidit][1] == data[1]) {
+            var idmid = fixedmididefs[readmidit][0];
+            if (idmid.search("looprec") >= 0) {
+                loopPlayRec(idmid);
+            } else if (idmid.search("freez") >= 0) {
+                freezPlayRec(idmid);
+            } else if (idmid.search("tap") >= 0) {
+                set_tap("tap");
+            }
+        }
     }
+
     if (data[0] == 176) {
         //setted CC
         for (var receivedcc = 0; receivedcc < midiCcActual.length; receivedcc++){
@@ -409,12 +423,14 @@ function loaderMidi(message) {
                 midiCCdispatch(receivedcc, data[2]);
             }
         }
+
         //mixer Cc
-         for (var receivedcc = 0; receivedcc < mixerdefs.length; receivedcc++){
+        for (var receivedcc = 0; receivedcc < mixerdefs.length; receivedcc++){
             if (data[1] == mixerdefs[receivedcc][3]){
                 midiCCdispatchsimple(mixerdefs[receivedcc][0], data[2]);
             }
         }
+
     }
 }
 
@@ -674,7 +690,6 @@ called by global timer*/
 
 
 
-
 function freezPlayRec(id)  {
               var el = document.getElementById(id);
 	if (el.value == "Freez") {
@@ -770,7 +785,6 @@ function updgui() {
         el = document.getElementById(channel);
         el.value = fromcha;
         midiCcActual[micc-1][3] = fromcha;
-
     }
 
     for(var tpcc =1; tpcc <=4; tpcc++){
@@ -805,15 +819,12 @@ function updgui() {
 }
 
 
-
-
 function selectDo(id) {
     var e = document.getElementById(id);
     var strUser = e.options[e.selectedIndex].value;
     var numberValue = parseFloat(strUser);
     csoundApp.setControlChannel(id, numberValue);
 }
-
 
 
 function selectDoTime(id) {
@@ -823,6 +834,7 @@ function selectDoTime(id) {
     // then send selection
     selectDo(id);
 }
+
 
 function selectReAm(id, cha) {
     var e = document.getElementById(id);
@@ -836,10 +848,7 @@ function selectReAm(id, cha) {
     } else {
         csoundApp.setControlChannel(chan, 0.0);
     }
-
 }
-
-
 
 
 function updateOnBpm(idvalue, idmode, bpm) {
@@ -978,6 +987,7 @@ function loada() {
     elom.style.display = 'none';
     var elot = document.getElementById('trackpad');
     elot.style.display = 'none';
+    metronome();
 }
 
 
@@ -1108,8 +1118,6 @@ function manageTpSettings(id, ccguin, value){
 
 
 
-
-
 //initialize
 //--------------------------------------------------------------------------------------------------------------
 
@@ -1168,6 +1176,33 @@ window.onload = function(){loada();};
 </div>
 
 <script>
+
+//Metronome indication
+var cmetr = 0;
+var metro = document.getElementById("bpm");
+var val_metro =0;
+var next_metro = 20;
+
+function metronome() {
+    val_metro = csoundApp.getControlChannel("metronome");
+    next_metro = csoundApp.getControlChannel("nxt_metronome");
+    
+    if (val_metro > 0.0) {
+        csoundApp.setControlChannel('metronome', 0.0);
+        cmetr = (cmetr + 1) % 2;
+        if (cmetr ==1) {
+            metro.style.background = "#FFFFFF";
+        } else {
+            metro.style.background = "#DD0000";
+        }
+    }
+    setTimeout(metronome, next_metro);
+}
+
+
+
+
+
 //generate mixer gui
 document.write('<div id="matrix" class="mixer">');
 var num =channels;
@@ -1249,16 +1284,41 @@ createGuiControllerCC(8);
 <br><br>
 fixed midi mapping<br>
 PC 0 - 99 : matrix preset 0 to 99<br>
-PC <script>document.write(pclowloopers + " - " + (pclowloopers + loopersqty -1));</script> : start/stop loopers<br>
-PC <script>document.write(pclowfreezers + " - " + (pclowfreezers + freezersqty -1));</script> : start/stop freezers<br>
-PC <script>document.write(pctaptempo);</script> : tap tempo<br>
+
+<script>
+    for (var readmidit = 0; readmidit < fixedmididefs.length; readmidit++) {
+        var idmid = fixedmididefs[readmidit][0];
+        var msgtypestr, whatiscon
+
+        if (fixedmididefs[readmidit][2] == 176) {
+             msgtypestr="CC";
+        } else if(fixedmididefs[readmidit][2] = 192){
+             msgtypestr="PC";
+        } else {
+            msgtypestr="BHO";
+        }
+        if (idmid.search("looprec") >= 0) {
+            whatiscon = "Looper" + idmid.substr(-1);
+        } else if (idmid.search("freez") >= 0) {
+            whatiscon = "Freeze" + idmid.substr(-1);
+        } else if (idmid.search("tap") >= 0) {
+            whatiscon = "Tap tempo";
+        } else {
+            msgtypestr="BHO";
+        }
+        document.write(whatiscon + " : " + msgtypestr + " "  + fixedmididefs[readmidit][1] + "<br>");
+     }
+</script>
+
 <br><br>
 Output mixer<br>
+
 <script>
 for (var fixcc = 0; fixcc < mixerdefs.length; fixcc++){
     document.write('CC '+ mixerdefs[fixcc][3] + ' : ' + mixerdefs[fixcc][2] + '<br>');
 }
 </script>
+
 <br><br>
 Incoming midi messagess:
 <div id="log_in">log here</div>
@@ -1321,11 +1381,37 @@ function drawTp(e) {
     var touchlist = e.changedTouches;
     top_at = findTopLeft("pad")[1];
     left_at = findTopLeft("pad")[0];
+    ctx_pad.clearRect(0, 0, pad.width, pad.height);
 
+    //draw areas
+    ctx_pad.strokeStyle = "#BBBBBB";
+    ctx_pad.beginPath();
+    ctx_pad.moveTo(pad.width*0.05, 0);
+    ctx_pad.lineTo(pad.width*0.05, pad.height);
+    ctx_pad.stroke();
+    ctx_pad.beginPath();
+    ctx_pad.moveTo(pad.width*0.95, 0);
+    ctx_pad.lineTo(pad.width*0.95, pad.height);
+    ctx_pad.stroke();
+    ctx_pad.beginPath();
+    ctx_pad.moveTo(0, pad.height*0.05);
+    ctx_pad.lineTo(pad.width, pad.height* 0.05);
+    ctx_pad.stroke();
+    ctx_pad.beginPath();
+    ctx_pad.moveTo(0, pad.height*0.95);
+    ctx_pad.lineTo(pad.width, pad.height* 0.95);
+    ctx_pad.stroke();
+    //text
+    ctx_pad.font = "20px Arial";
+    ctx_pad.fillText("min", 0, pad.height * 0.5);
+    ctx_pad.fillText("max", pad.width * 0.95, pad.height * 0.5);
+    ctx_pad.fillText("min", pad.width * 0.5, pad.height * 0.05);
+    ctx_pad.fillText("max", pad.width * 0.5, pad.height* 0.95 + 15);
+
+    //draw touch
     var x = (touchlist[0].clientX - left_at) / pad.width;
     var y = (touchlist[0].clientY - top_at) / pad.height;
 
-    ctx_pad.clearRect(0, 0, pad.width, pad.height);
     ctx_pad.strokeStyle = "red";
     ctx_pad.lineWidth = 6;
   
@@ -1363,10 +1449,19 @@ function tpCdispatch(tpparn, value){
     var low = tpParActual[tpparn][2];
     var high = tpParActual[tpparn][3];
     var val = 0.0;
+    //limit control - value 0-1 - value 0.1-0.9
+    var value_ = 0.0;
+    value_ = - 0.1 + value * 1.2;
+    if (value_ < 0.0) {
+        value_ = 0.0;
+    } else if (value_ > 1.0) {
+        value_ = 1.0;
+    }
+    //calculate output
     if (low < high) {
-        val = low + (high- low) * value;
+        val = low + (high- low) * value_;
     } else {
-        val = low - (low - high) * value;
+        val = low - (low - high) * value_;
     }
     //correct value if above 0 or 1
     if (val < 0) {
@@ -1388,13 +1483,11 @@ window.addEventListener("resize", onResaiz);
 
 pad.addEventListener("touchstart", function(e) {
     drawTp(e);
-   // sendValToCs();
     e.preventDefault();
 }, false);
 
 pad.addEventListener("touchmove" , function(e) {
     drawTp(e);
-    //sendValToCs();
     e.preventDefault();
 }, false);
 
@@ -1410,6 +1503,8 @@ pad.addEventListener("touchmove" , function(e) {
 <div id="loopers">
 <br>
 <script>
+var loopersqty = 4;
+
 for (lop =1; lop <= loopersqty; lop++) {
 
     document.write('<div class="timew">');
@@ -1520,7 +1615,9 @@ for (lop =1; lop <= loopersqty; lop++) {
     <br>
     Rise time   <input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="freezRise" oninput="sliderDo(id, value)">
 </div>
+
 <script>
+var freezersqty = 3;
 for (var frezz = 1; frezz <= freezersqty; frezz++) {
     document.write('<div style="width:27%;float:left;">');
     //document.write('<div class="time"><h1>' + frezz + '</h1>');
@@ -1639,12 +1736,14 @@ giempty ftgen 10, 0, 256, -2,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;240
     0, 0, 0, 0, 0, 0, 0
 ;tables from 11 to 137 are for user presets
-
+/*
 giSine ftgen 138, 0, 8192, 10, 1
 giTriangle ftgen 139, 0, 8192, 7, 0, 2048, 1, 4096, -1, 2048, 0
 giSquare ftgen 140, 0, 8192, 7, 0, 1, 1, 4095, 1, 1, -1, 4094, -1, 1, 0
-
-
+*/
+giSine ftgen 138, 0, 16384, 10, 1
+giTriangle ftgen 139, 0, 16384, 8, 0, 2048 *2, 1, 4096*2, -1, 2048*2, 0
+giSquare ftgen 140, 0, 16384, 8, 0, 10*2, 1, 4080*2, 1, 9*2, -1, 4080*2, -1, 10*2, 0
 
 gihalfsine ftgen	149, 0, 4097, 9, 0.5, 1, 0
 gigrainenv ftgen 150, 0, 4096, 7, 0, 4096/2, 1, 4096/2, 0 
@@ -1669,14 +1768,17 @@ chnset 0, "tap"
 ktap chnget "tap"
 ktime times
 klasttap init 0
+event_i "i", 2, 0, -1
 if ktap == 1 then
-     ;
      if (ktime - klasttap) < 3 then 
          gkbpm = 60 / (ktime - klasttap)
          chnset gkbpm, "bpm"
      endif
      klasttap = ktime
      chnset k(0), "tap"
+     ;reset metronome
+     event "i", -2, 0, -1
+     event "i", 2, 0, -1
 endif
 
 
@@ -1749,6 +1851,17 @@ event_i "i", 2000, 0, -1, 0, 0
 endin
 
 
+
+instr 2;metro messages
+ktrig metro 2 * gkbpm / 60
+if ktrig == 1 then
+    chnset k(1.0), "metronome"
+endif
+
+kphs phasor 2 * gkbpm / 60
+kmill = 10 + (1-kphs) * 30000 / gkbpm
+chnset kmill, "nxt_metronome"
+endin
 
 
 
@@ -2072,8 +2185,8 @@ endin
 
 instr 101;mix
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
 kphase = 1
 if kpar2 > 0.5 then
 	kphase = -1
@@ -2086,10 +2199,10 @@ endin
 
 instr 102; distortion
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 aout distort1 ain, kpar1 * 10, kpar2 * 10, kpar3, kpar4
 $OUTMIXT
 endin
@@ -2098,8 +2211,8 @@ endin
 
 instr 103;clip
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
 aout_ clip ain * kpar1 * 2, 0, 0.5
 aout = aout_ * kpar2 * 3
 $OUTMIXT
@@ -2109,8 +2222,8 @@ endin
 
 instr 104;abs
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
 abss = abs(ain)
 aabs dcblock2 abss
 aout = ain * kpar2 + aabs * 2 * kpar1
@@ -2121,9 +2234,9 @@ endin
 
 instr 105; degrader taken from Ian Mc Curdy LoFi.csd
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 kvalues	 pow 2, kpar2 * 16
 abit = (int((ain/0dbfs)*kvalues))/kvalues
 afold fold abit, kpar1 * 10
@@ -2135,18 +2248,20 @@ endin
 
 instr 106;powershaper
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 krms rms ain
 kswing limit krms, 0, 1
-kshapeamt = 1 - ((kpar1 * 0.75) - 0.25 * kpar1 * kswing)
+;kshapeamt = 1 - ((kpar1 * 0.75) - 0.25 * kpar1 * kswing)
+kshapeamt = 1 - (kpar1 ^ 6) + 0.2 * (1 - kswing)
+kshapeamt limit kshapeamt, 0, 1
 alimin AtanLimit ain
 ashapa powershape alimin, kshapeamt
 ashap powershape ashapa, kshapeamt
-ashhp buthp ashap, kpar2 * kpar2 * 20000
-ashlp butlp ashhp, kpar3 * kpar3 * 20000
+ashhp buthp ashap, kpar2 * kpar2 * 20000 + 20
+ashlp butlp ashhp, kpar3 * kpar3 * 20000 + 20
 aoutl AtanLimit ashlp
 aout = aoutl * kpar4 * kpar4 * 4
 $OUTMIXT
@@ -2154,10 +2269,58 @@ endin
 
 
 
+
+instr 107;squarer
+$INMIXT
+;ingain
+$PARAMTP(1'giport)
+;slope
+$PARAMTNP(2)
+;envelope fixed
+$PARAMTP(3'giport)
+;volume
+$PARAMTP(4'giport)
+
+reset:
+isizehalf = 16384
+iroundness = 100
+
+kslope = (isizehalf - iroundness) * (1-kpar_2) * 0.99
+islope = i(kslope)
+itfun ftgentmp 0, 123, isizehalf * 2, 7, -1, isizehalf - islope - iroundness, -1, iroundness, -0.95, islope, 0, islope, 0.95, iroundness, 1, isizehalf - islope - iroundness, 1
+
+ainn AtanLimit ain * kpar1 * 2
+asquared tab (ainn + 1) * isizehalf, itfun
+rireturn
+
+;check for update slowly
+ktrig  metro 10
+kch changed kpar_2
+kchng init 0
+if kchng == 0 && kch == 1 then
+    kchng = 1
+endif
+; reinit the transfer function
+if kchng == 1 && ktrig == 1 then
+    reinit reset
+    kchng = 0
+endif
+
+atrk follow2 ain, 0.05, 0.05
+; ktrk downsamp atrk
+aenva butlp asquared * atrk, 30 + kpar3 * kpar3 * 20000
+
+aout = aenva * kpar4 * kpar4 * 8
+$OUTMIXT
+endin
+
+
+
+
 instr 108; slow attack
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
 
 klogic init 0
 ktime init 2
@@ -2184,9 +2347,9 @@ endin
 
 instr 109;Oeyvind Brandtsegg Compressor
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 kingain = kpar1 * kpar1 * 4
 kthresh = -150 + kpar2 * 150
 kratio = 1 + kpar3 * 30
@@ -2198,9 +2361,9 @@ endin
 
 instr 110;lowpass
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 aout_ lowpass2 ain, 5 + kpar1 * kpar1 * 5000, 1 + 300 * kpar2 * kpar2
 aout = aout_ * kpar3
 $OUTMIXT
@@ -2210,8 +2373,8 @@ endin
 
 instr 111;highpass
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
 aout_ buthp ain, 5 + kpar1 * kpar1 * 8000
 aout = aout_ * kpar2
 $OUTMIXT
@@ -2221,10 +2384,10 @@ endin
 
 instr 112;env lp
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 kenv rms ain * kpar1  * 5
 kfm= kpar2 * kpar2 * 10000
 kfM= kpar3 * kpar3 * 10000
@@ -2237,10 +2400,10 @@ endin
 
 instr 113; lpf18
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 ;kpar1 - frequency
 ;kpar2 - resonance
 ;kpar3 - distortion
@@ -2255,9 +2418,9 @@ endin
 
 instr 114;parametric
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 kcf = kpar1 * kpar1 * 10000
 aout eqfil ain, kcf, kcf  * 0.5 * kpar2, kpar3 * kpar3 * 10
 $OUTMIXT
@@ -2267,7 +2430,7 @@ endin
 
 instr 115;condor cab sym
 $INMIXT
-$PARAMT(1);scoop
+$PARAMTP(1'giport);scoop
 ;low
 alowhp buthp ain, 90 + 30 * kpar1
 alowlp butlp alowhp, 90 + 30 * kpar1
@@ -2288,10 +2451,10 @@ endin
 
 instr 116;wha
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 ;freq range of pedal 450- 1k6 circa, gain 18 db
 afil butbp ain, 400 + kpar1 * (1700 - 400), (0.01 + kpar3) * (400 + kpar1 * (1700 - 400))
 afilg = afil * ampdbfs(kpar2 * 20)
@@ -2303,10 +2466,9 @@ endin
 
 instr 117;vocal filter
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 
 kindex = round(kpar1 * 4.3)
 kport = kpar2 * 2
@@ -2376,10 +2538,10 @@ endin
 
 instr 119;4 bands guitar eq 20 db
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 klow init 200
 kmid1 init 300
 kmid2 init 3000
@@ -2397,10 +2559,10 @@ endin
 
 instr 120;tremolo
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 
 ifno ftgentmp 0, 123, 8192, 10, 1
 iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
@@ -2416,11 +2578,11 @@ endin
 
 instr 121;flanger
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
-adel oscil 0.5, kpar1
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
+adel oscil 0.499, kpar1, giSine
 adel = adel + 0.5
 ares flanger ain, adel * 0.02 * kpar2, kpar3 * 0.99
 aout CosSinMix ain, ares, kpar4
@@ -2431,17 +2593,17 @@ endin
 
 instr 122; phaser
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 ;kpar1 - lfo
 ;kpar2 - frequency
 ;kpar3 - feedback
 ;kpar4 - dry - wet
 iord init 128; 1 - 4999
-kmod oscili 0.49, kpar1 * kpar1 * 20, giSine
-kmod = kmod + 0.51
+kmod oscili 0.499, kpar1 * kpar1 * 20, giSine
+kmod = kmod + 0.5
 ares phaser1 ain, 40 + kpar2 * kpar2 * 10000 * kmod, iord, kpar3
 aout CosSinMix ain, ares, kpar4
 $OUTMIXT
@@ -2451,10 +2613,10 @@ endin
 
 instr 123;chorus
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 kdelay = kpar1 * 0.03
 kfreq = kpar2 * 5
 
@@ -2480,10 +2642,10 @@ endin
 
 instr 124;leslie based on Ian McCurdy Leslie.csd
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 
 ares = ain
 kcrossover = 20+ kpar1 * kpar1 * 8000
@@ -2522,10 +2684,10 @@ endin
 
 instr 125;pitch shift
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 ktransp = (kpar1 - 0.5) * 48; transpose +- 24
 ares PitchShifter_akk ain, ktransp, kpar2, gihalfsine
 aout CosSinMix ain, ares, kpar3
@@ -2536,9 +2698,9 @@ endin
 
 instr 126;pitch shift spectral
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 ksemitones = round((kpar1 - 0.5) * 48)
 ktransp = semitone(ksemitones); transpose +- 24
 ksign =(ktransp < 0 ? -1 : 1)
@@ -2556,9 +2718,9 @@ endin
 
 instr 127;ringmod
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 
 ifno ftgentmp 0, 0, 8192, 10, 1
 iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
@@ -2574,10 +2736,10 @@ endin
 
 instr 128;FMer
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 
 kqual init 0.01
 kpit = (kpar1 - 0.5) * 48; carrier transpose +- 24
@@ -2595,13 +2757,13 @@ endin
 instr 129;hilbert
 $INMIXT
 ;freq
-$PARAMT(1)
+$PARAMTP(1'giport)
 ;min shift
-$PARAMT(2)
+$PARAMTP(2'giport)
 ;max shift
-$PARAMT(3)
+$PARAMTP(3'giport)
 ;direction
-$PARAMT(4)
+$PARAMTNP(4)
 
 aoscil oscili 0.5, kpar1 * kpar1 * kpar1 * 100, giSine
 koscil downsamp aoscil + 0.5
@@ -2623,9 +2785,9 @@ adownshift = (amod1 - amod2) * 0.7
 aout1 balance aupshift, ain
 aout2 balance adownshift, ain
 
-if kpar4 >= 0 &&  kpar4 < 0.3 then;upshift only
+if kpar_4 >= 0 &&  kpar_4 < 0.3 then;upshift only
     aout = aout1 * 2
-elseif kpar4 >= 0.3 &&  kpar4 < 0.4 then;downshift only
+elseif kpar_4 >= 0.3 &&  kpar_4 < 0.4 then;downshift only
     aout = aout2 * 2
 else
     aout = aout1 + aout2
@@ -2637,9 +2799,9 @@ endin
 
 instr 130; delay
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTP(1'giport*2)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 abuf	delayr	1.1
 adel 	deltap	kpar1
 	delayw	ain + adel * kpar2
@@ -2654,9 +2816,9 @@ endin
 instr 132;reverse delay
 ;taken from Ian Mc Curdy reverse.csd
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTP(1'giport*2)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
 
 ienv1	ftgenonce 0, 0, 131072, 7, 0, 1024, 1, 131072-(1024*2), 1, 1024, 0
 ienv2	ftgenonce 0, 0, 131072, 7, 0, 4096, 1, 131072-(4096*2), 1, 4096, 0 	
@@ -2692,10 +2854,10 @@ endin
 
 instr 133;crapdelay
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport*2)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 
 awobble_ oscil kpar2 * .003, 1 / (4 * kpar1), giSine
 awobble = 1 + awobble_
@@ -2716,10 +2878,10 @@ endin
 
 instr 140; reverb
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 denorm ain
 ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
 aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
@@ -2732,10 +2894,10 @@ endin
 
 instr 141;modulated_verb
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 
 ilp1  init 1/10
 ilp2  init 1/23
@@ -2802,13 +2964,13 @@ endin
 
 instr 142;shroeder verb
 $INMIXT
-$PARAMT(1)
+$PARAMTP(1'giport)
 ;revtime
-$PARAMT(2)
+$PARAMTP(2'giport)
 ;pretime
-$PARAMT(3)
+$PARAMTP(3'giport)
 ;postime
-$PARAMT(4)
+$PARAMTP(4'giport)
 ;d-w
 
 denorm ain
@@ -2849,10 +3011,10 @@ endin
 
 instr 143;envreverb
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 denorm ain
 ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
 aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
@@ -2875,10 +3037,10 @@ endin
 
 instr 150;spectral arpeggiator
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 kfrr = kpar1 * kpar1 * 30
 kl = kpar2 * kpar2
 kh = kpar3 * kpar3
@@ -2913,11 +3075,11 @@ endin
 instr 151; frequency shifter
 $INMIXT
 ;shift
-$PARAMT(1)
+$PARAMTP(1'giport)
 ;post gain
-$PARAMT(2)
+$PARAMTP(2'giport)
 ;dry-wet
-$PARAMT(3)
+$PARAMTP(3'giport)
 
 kshift_ = (kpar1 - 0.5) * 2
 kshift = kshift_ * kshift_ * 500;-500 + 500 exponential
@@ -2933,10 +3095,10 @@ endin
 
 instr 152;pseudogranular
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport*2)
+$PARAMTP(2'giport*2)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 ;kpar1 - granule time
 ;kpar2 - delay ratio
 ;kpar3 - delay feedback
@@ -2960,13 +3122,13 @@ endin
 instr 153; resonator
 $INMIXT
 ;frequency
-$PARAMT(1)
+$PARAMTP(1'giport)
 ;cutoff
-$PARAMT(2)
+$PARAMTP(2'giport)
 ;feedback
-$PARAMT(3)
+$PARAMTP(3'giport)
 ;dry-wet
-$PARAMT(4)
+$PARAMTP(4'giport)
 
 kfrq = 20 + kpar1 * kpar1 * 2000
 kcutoff = 40 + kpar2 * kpar2 * 15000
@@ -2981,24 +3143,24 @@ endin
 
 instr 155; harmonizer
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTNP(1)
+$PARAMTNP(2)
+$PARAMTNP(3)
 
 ;tonality
-ktonality = int(kpar1 * 11.1)
+ktonality = int(kpar_1 * 11.1)
 
 ;interval                                   t  2  3  4, 5  6  7
 iintevals ftgentmp 0, 0, 8, -2, 0, 2, 4, 5, 7, 9, 11;semitones to major
-kinterval_m tab int(kpar2 * 6.1), iintevals
+kinterval_m tab int(kpar_2 * 6.1), iintevals
 
 ;octave
 koctave init 1
-if kpar3 < 0.25 then
+if kpar_3 < 0.25 then
     koctave = 0.25
-elseif kpar3 >= 0.25 && kpar3 < 0.5 then
+elseif kpar_3 >= 0.25 && kpar_3 < 0.5 then
     koctave = 0.5
-elseif kpar3 >= 0.5 && kpar3 < 0.75 then
+elseif kpar_3 >= 0.5 && kpar_3 < 0.75 then
     koctave = 1
 else
     koctave = 2
@@ -3063,10 +3225,10 @@ endin
 
 instr 160;tremoloBpm
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 
 istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
 kstep tab round(kpar1 * 4), istep
@@ -3087,10 +3249,10 @@ endin
 
 instr 161;delayBpm
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTP(1'giport)
+$PARAMTP(2'giport*2)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
 
 istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
 kstep tab round(kpar1 * 4), istep
@@ -3109,9 +3271,9 @@ endin
 
 instr 170;gate
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
+$PARAMTNP(1)
+$PARAMTNP(2)
+$PARAMTP(3'giport)
 
 reset:
 ihalftab = 16384
@@ -3143,7 +3305,7 @@ endif
 
 ;mixing variants
 aout = 0
-if kpar2 > 0.5 then
+if kpar_2 > 0.5 then
     kouth_ downsamp aouth
     kouth portk kouth_, 0.001 + 0.15 * kpar3
     aout = kouth * ain
@@ -3161,19 +3323,19 @@ endin
 instr 171;trapez envelope
 ;[71, "shortEnv", "threshold", "attack", "sustain", "release"],
 $INMIXT
-$PARAMT(1)
-$PARAMT(2)
-$PARAMT(3)
-$PARAMT(4)
+$PARAMTNP(1)
+$PARAMTNP(2)
+$PARAMTNP(3)
+$PARAMTNP(4)
 atrk follow2 ain, 0.05, 0.05
 ktrk downsamp atrk
 
-kpar2 init 0
-kpar3 init 0
-kpar4 init 0
-katt = kpar2 * 0.25
-ksus = kpar3
-krel = kpar4
+kpar_2 init 0
+kpar_3 init 0
+kpar_4 init 0
+katt = kpar_2 * 0.25
+ksus = kpar_3
+krel = kpar_4
 
 reset:
 iatt = i(katt)
@@ -3184,14 +3346,14 @@ rireturn
 
 klogic init 0
 
-ktratt trigger ktrk, kpar1, 0
+ktratt trigger ktrk, kpar_1, 0
 ;attack
 if ktratt == 1 && changed(ktratt) == 1 && klogic == 0 then
     klogic = 1
     reinit reset
 endif
 
-ktrrel trigger ktrk, kpar1, 1
+ktrrel trigger ktrk, kpar_1, 1
 ;release
 if ktrrel == 1 && changed(ktrrel) == 1 && klogic == 1 then
     klogic = 0
@@ -3204,14 +3366,14 @@ endin
 
 
 
-instr 172
+instr 172; autofreeze
 $INMIXT
 ;threshold
-$PARAMT(1)
+$PARAMTNP(1)
 ;risetime
-$PARAMT(2)
+$PARAMTNP(2)
 ;modul
-$PARAMT(3)
+$PARAMTP(3'giport)
 
 fanal pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 
@@ -3219,7 +3381,7 @@ kfreeza init 0
 knext init 0
 k_t_rms_ max_k ain, 1, 1
 k_t_rms port k_t_rms_, 0.1
-ktrig trigger k_t_rms, kpar1 * kpar1, 0
+ktrig trigger k_t_rms, kpar_1 * kpar_1, 0
 if knext == 1 then
     kfreeza = 1
     knext = 0
@@ -3230,7 +3392,7 @@ if ktrig == 1 then
 endif
 
 kscal jspline 0.0594 * 0.5 * kpar3, 0.1, 0.1 + 3 * kpar3
-kenv portk kfreeza, 0.01 + kpar2 * kfreeza
+kenv portk kfreeza, 0.01 + kpar_2 * kfreeza
 
 fsig pvsfreeze fanal, kfreeza, kfreeza
 fmodu pvscale fsig, 1 - kscal
@@ -3241,6 +3403,8 @@ aout = (aoutu + aoutd) * kenv / 1.41
 
 $OUTMIXT
 endin
+
+
 
 
 instr 1000;output
@@ -3407,8 +3571,8 @@ $LOOPER
 ;return to matrix in
 Sloop_in_ma sprintf "loop_in_ma%d", p4
 kloop_in_ma_ chnget Sloop_in_ma
-kloop_in_ma port kloop_in_ma_ * kloop_in_ma_, giport
-galoop_in_ma AtanLimit galoop_in_ma + (aoutL + aoutR) * kloop_in_ma * kloop_in_ma * 2
+kloop_in_ma port kloop_in_ma_ * kloop_in_ma_* 8, giport
+galoop_in_ma AtanLimit galoop_in_ma + (aoutL + aoutR) * kloop_in_ma * kloop_in_ma
 endin
 
 

@@ -90,18 +90,12 @@ chnset 1, Sautothr
 ktreshv chnget Sautothr
 ktreshv init 1
 
-;kmax rms ainL + ainR
-;kinL downsamp ainL
-;kinR downsamp ainR
-;kinL = abs(kinL)
-;kinR = abs(kinR)
 
 kinL max_k ainL, 1, 1
 kinR max_k ainR, 1, 1
 kmax = (kinL > kinR ?  kinL : kinR)
 ktrigon trigger kmax,  ktreshv, 0
 ktrigon init 0
-;printk2 ktrigon
 
 
 if (kactiv_mode == 1) then; manual 
@@ -182,9 +176,9 @@ else
               kol_re port kol_re_+ kol_repamp, giport
 	;modulator
 	kmod_amp_ chnget Smodulamp;0<>1
-	kmod_amp = kmod_amp_ * kmod_amp_ * 5
+	kmod_amp = kmod_amp_ ^ 2
 	kmod_freq_ chnget Smodulfreq;0<>1
-	kmod_freq = kmod_freq_ * kmod_freq_ * kmod_freq_ * 15
+	kmod_freq = (kmod_freq_ ^ 4) * 15
               ;modulatore amplitude
               kmod_polar chnget Smodpolar
 	kmod_offset_ chnget Smoduloffset;0 <> 1: 0 negative only ,0.5 bipolar, 1 positive only
