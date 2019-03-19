@@ -18,7 +18,7 @@
 <head>
 <title>Matrix</title>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=5.0" id="viewport_meta">
 
 <style type="text/css">
 body {
@@ -756,6 +756,9 @@ function updgui() {
         channelSetter(channel);
      }
      //update midi cc
+    var elmiid = document.getElementById("miid");
+    elmiid.style.background = "#bbbbbb";
+
     var fromcha = 0;
     var el;
     for(var micc =1; micc<=8; micc++){
@@ -764,6 +767,9 @@ function updgui() {
         // update array with current cc definition (midiCcActual)
         channel = "ccmidiC" + micc.toString();
         fromcha = csoundApp.getControlChannel(channel);
+        if (fromcha > 0) {
+                elmiid.style.background = "#bbffbb";
+        }
         el = document.getElementById(channel);
         el.value = fromcha;
         midiCcActual[micc-1][0] = fromcha;
@@ -786,6 +792,9 @@ function updgui() {
         el.value = fromcha;
         midiCcActual[micc-1][3] = fromcha;
     }
+    //update trackpad
+    var eltpad = document.getElementById("tpad");
+    eltpad.style.background = "#bbbbbb";
 
     for(var tpcc =1; tpcc <=4; tpcc++){
         //retrive values from csound
@@ -793,6 +802,9 @@ function updgui() {
         // update array with current trackpad definition (tpParActual)
         channel = "tp_para" + tpcc.toString();
         fromcha = csoundApp.getControlChannel(channel);
+        if (fromcha > 0) {
+                eltpad.style.background = "#bbffbb";
+        }
         el = document.getElementById(channel);
         el.value = fromcha;
         tpParActual[tpcc-1][0] = fromcha;
@@ -972,6 +984,14 @@ function toggler(id1, id2, id3, id4) {
     e2.style.display = 'none';
     e3.style.display = 'none';
     e4.style.display = 'none';
+
+    var viewport_meta = document.getElementById('viewport_meta'); 
+    //content="width=device-width, minimum-scale=1.0, maximum-scale=5.0"
+    if (id1 == 'trackpad') {
+        viewport_meta.setAttribute( 'content', "width=device-width, minimum-scale=1.0, maximum-scale=1.0");
+    } else {
+        viewport_meta.setAttribute( 'content', "width=device-width, minimum-scale=1.0, maximum-scale=5.0");
+    }
 }
 
 
@@ -1657,7 +1677,6 @@ for (var mixcount = 0; mixcount < mixerdefs.length; mixcount++) {
 
 </div>
 
-
 </body>
 </html>
 
@@ -2254,16 +2273,25 @@ $PARAMTP(3'giport)
 $PARAMTP(4'giport)
 krms rms ain
 kswing limit krms, 0, 1
-;kshapeamt = 1 - ((kpar1 * 0.75) - 0.25 * kpar1 * kswing)
-kshapeamt = 1 - (kpar1 ^ 6) + 0.2 * (1 - kswing)
+kshapeamt = 1 - (kpar1 ^ 5) + 0.2 * (1 - kswing)
 kshapeamt limit kshapeamt, 0, 1
-alimin AtanLimit ain
-ashapa powershape alimin, kshapeamt
+ashapa powershape ain, kshapeamt
 ashap powershape ashapa, kshapeamt
 ashhp buthp ashap, kpar2 * kpar2 * 20000 + 20
 ashlp butlp ashhp, kpar3 * kpar3 * 20000 + 20
 aoutl AtanLimit ashlp
-aout = aoutl * kpar4 * kpar4 * 4
+;gate
+krms rms ain 
+kthreshold init 0.0005
+ktrig trigger krms, kthreshold, 1
+if krms > kthreshold then 
+    kgate_ = 1
+else
+    kgate_ = 0
+endif
+kgate port kgate_, 0.01
+
+aout = aoutl * kpar4 * kpar4 * 4 * kgate
 $OUTMIXT
 endin
 
@@ -2306,11 +2334,10 @@ if kchng == 1 && ktrig == 1 then
     kchng = 0
 endif
 
-atrk follow2 ain, 0.05, 0.05
-; ktrk downsamp atrk
-aenva butlp asquared * atrk, 30 + kpar3 * kpar3 * 20000
+aenva butlp asquared, 30 + kpar3 * kpar3 * 20000
 
-aout = aenva * kpar4 * kpar4 * 8
+aoutb balance aenva, ain
+aout = aoutb * kpar4 * kpar4 * 8
 $OUTMIXT
 endin
 
@@ -3377,6 +3404,12 @@ $PARAMTP(3'giport)
 
 fanal pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
 
+reset:
+kslope =0.01 + kpar_2 * 3
+islope = i(kslope)
+kenv linseg 0, islope, 1, 0.01, 1
+rireturn
+
 kfreeza init 0
 knext init 0
 k_t_rms_ max_k ain, 1, 1
@@ -3385,6 +3418,7 @@ ktrig trigger k_t_rms, kpar_1 * kpar_1, 0
 if knext == 1 then
     kfreeza = 1
     knext = 0
+    reinit reset
 endif
 if ktrig == 1 then
     kfreeza = 0
@@ -3392,7 +3426,6 @@ if ktrig == 1 then
 endif
 
 kscal jspline 0.0594 * 0.5 * kpar3, 0.1, 0.1 + 3 * kpar3
-kenv portk kfreeza, 0.01 + kpar_2 * kfreeza
 
 fsig pvsfreeze fanal, kfreeza, kfreeza
 fmodu pvscale fsig, 1 - kscal
