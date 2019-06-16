@@ -21,6 +21,10 @@ Sspeed sprintf  "speedloop%d", p4
 chnset 1, Sspeed
 kspeed chnget Sspeed
 
+Sspeedy sprintf  "ol_sppp%d", p4
+kspeedy_ chnget Sspeedy
+kspeedy port kspeedy_ * kspeedy_ * 4, 0.03
+
 Slink sprintf  "linkp%d", p4
 chnset 1, Slink
 klinkpoin chnget Slink
@@ -33,7 +37,6 @@ if changed(kreset_)==1 && kreset_==1 then
 else
     kreset = 0
 endif
-
 
 ;Speed modulation
 ;amp
@@ -216,9 +219,22 @@ kmuted port kmute_status, giport
 kfeedback = kol_re * kmuted
 
 ;table based looper
-kol_in port kol_in_, giport
-aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kfeedback, kspeed + kspeed_mod, kreset, gimaxDlyTime
 
+kspeedt = kspeed * kspeedy + kspeed_mod
+kol_in port kol_in_, giport
+aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kfeedback, kspeedt, kreset, gimaxDlyTime
+
+;chnset 0, "ol_fixp1"
+Sfixp sprintf  "ol_fixp%d", p4
+kfixp chnget Sfixp
+if kfixp > 0.5 then
+    fainL  pvsanal aoutL, gifftsize, gioverlap, giwinsize, giwinshape
+    fainR  pvsanal aoutR, gifftsize, gioverlap, giwinsize, giwinshape
+    fsigL pvscale fainL, 1/kspeedt, 0, 1, 100
+    fsigR pvscale fainR, 1/kspeedt, 0, 1, 100
+    aoutL pvsynth fsigL
+    aoutR pvsynth fsigR
+endif
 
 
 ;audio output

@@ -6,10 +6,10 @@
 -b256 -B512
 
 ;Current Directory
---omacro:GSCURDIR=/storage/emulated/0/DCIM/MatrixProcessor/
+--omacro:GSCURDIR=/storage/emulated/0/Download/CsoundForAndroid_TPZ/MatrixProcessor/
 
 ;Include files directory
---env:INCDIR+=/storage/emulated/0/DCIM/MatrixProcessor/include
+--env:INCDIR+=/storage/emulated/0/Download/CsoundForAndroid_TPZ/MatrixProcessor/include
 </CsOptions>
 
 <CsHtml5>
@@ -45,6 +45,19 @@ label {
 }
 
 .header {
+          padding-top: 0.5%;
+          padding-bottom: 0.5%;
+          padding-left: 0.5%;
+          padding-right: 0.5%;
+          border-style:solid;
+          border-width: 1px;
+          border-color:#000000;
+          column-count:4;
+}
+
+
+.headerv {
+          //font-size:0.01em;
           padding-top: 0.5%;
           padding-bottom: 0.5%;
           padding-left: 0.5%;
@@ -92,7 +105,7 @@ input[type=checkbox] {
 }
 
 input[type=button] {
-               width:45%;
+               width:47%;
 	font-size:1em;
 	//padding: 0.5em;
 	border-style:solid;
@@ -142,8 +155,8 @@ input[type=number] {
 }
 
 input[type=number].head {
-    width:24%;
-    font-size:0.7em;
+    width:47%;
+    font-size:1em;
 }
 
 input[type=number].top {
@@ -169,13 +182,13 @@ select.foothalf {
 }
 
 input[type=button].bpm {
-               width:21%;
-               font-size:0.8em;
+               width:47%;
+               font-size:1em;
 }
 
 input[type=button].viuw {
-               width:23%;
-               font-size:0.6em;
+               width:100%;
+               font-size:1em;
 }
 
 
@@ -186,12 +199,12 @@ input[type=button].preset {
 
 input[type=button].foothw {
                width:50%;
-               font-size:1.5em;
+               font-size:1.4em;
 }
 
 input[type=button].footdh {
                width:100%;
-               font-size:2.3em;
+               font-size:2.2em;
 }
 
 
@@ -482,9 +495,12 @@ var cc_cha_def =[];
 function createCcChannelNumber(){
     //to be called at init gui
     //see instr 50 for channel sequence
-    var cha__ = ["r0c_n_", "r1c_n_", "r2c_n_", "r3c_n_", "r4c_n_",
-        "r5c_n_", "r6c_n_", "r7c_n_", "r8c_n_",// "eff_n_",
-        "col_n_par1", "col_n_par2", "col_n_par3", "col_n_par4",  "pan_n_", "volmat_n_", "volume_n_"];
+    var cha__ = ["channel_n_input0", "channel_n_input1", "channel_n_input2", 
+        "channel_n_input3", "channel_n_input4", "channel_n_input5", 
+        "channel_n_input6", "channel_n_input7", "channel_n_input8",// "eff_n_",
+        "channel_n_par1", "channel_n_par2", "channel_n_par3", "channel_n_par4",  
+        "pan_n_", "volmat_n_", "volume_n_"];
+
     var toappend = "";
     for(var col = 1; col<=channels; col++){
         for(var i = 0; i < cha__.length; i++){
@@ -734,8 +750,8 @@ function updgui() {
     for (col =1; col <= num; col++) {
         //matrix
         for (vsl =0; vsl <= num; vsl++) {
-              channel = "r"+ vsl.toString() + "c" + col.toString();
-	channelSetter(channel);
+            channel = "channel" + col.toString() + "input" + vsl.toString();
+            channelSetter(channel);
         }
         //effect
         channel = "eff" + col.toString();
@@ -743,7 +759,7 @@ function updgui() {
         effChange(channel);//to update parameters name indication
         //parameters
         for (par =1; par <= 4; par++) {
-            channel = "col" + col.toString() + "par" + par.toString();1
+            channel = "channel" + col.toString() + "par" + par.toString();1
             channelSetter(channel);
         }
         //pan
@@ -1019,15 +1035,36 @@ function set_tap(id) {
 	var bppmm = csoundApp.getControlChannel("bpm");
               bppmm = Number(Math.round(bppmm+'e'+4)+'e-'+4);
               document.getElementById("bpm").value = bppmm.toFixed(3);
-              //document.getElementById("bpm").value = bppmm.toString();
     }, 200)//delay of 200 ms necessary to allow javascript minimum time
 }
 
 
+function to1(num){
+    //speed slider reset
+    var id = "ol_sppp" + num;
+    var el = document.getElementById(id);
+    el.value = 0.5;
+    csoundApp.setControlChannel(id, 0.5);
+}
+
+function fixpitch(num){
+    //looper fixed pitch selector
+    var id = "ol_fixp" + num;
+    var el = document.getElementById(id);
+    if (el.value == "fPitch") {
+        el.value = "Fixed";
+        el.style.background="#ff0000";
+        csoundApp.setControlChannel(id, 1);
+    } else {
+        el.value = "fPitch";
+        el.style.background="#bbbbbb";
+        csoundApp.setControlChannel(id, 0);
+    }
+}
 
 
 // Global timer to update gui
-var myVar = setInterval(myTimed, 500);
+var myVar = setInterval(myTimed, 700);
 
 //Function to be performed by Global timer
 function myTimed() {
@@ -1152,47 +1189,66 @@ window.onload = function(){loada();};
 
 <body>
 <div class ="header">
-<input type="number" class="head" min=20 max=400 step="any" value=60 id="bpm" onchange="changeBpm(id, value)">
-<input type="button" class="bpm" value="BpM" id="tap" onclick="set_tap(id)">
-<input type="number" class="head" min=0 max=20 step="any" value=0 id="tailtime" onchange="numberDoLimit(id, value, 0, 20)">
-<label>Tail:</label><label id="upch">0</label>
 
-<input type="button" class='viuw' value="matrix" id="matr" onclick="toggler('matrix', 'loopers', 'midiw', 'trackpad')">
-<input type="button" class='viuw' value="midi" id="miid" onclick="toggler('midiw', 'loopers', 'matrix', 'trackpad')">
-<input type="button" class='viuw' value="tpad" id="tpad" onclick="toggler('trackpad', 'midiw', 'loopers', 'matrix')">
-<input type="button" class='viuw' value="looper" id="looo" onclick="toggler('loopers', 'matrix', 'midiw', 'trackpad')">
+    <div>
+    <input type="number" class="head" min=20 max=400 step="any" value=60 id="bpm" onchange="changeBpm(id, value)">
+    <input type="button" class="bpm" value="BpM" id="tap" onclick="set_tap(id)">
+     <br>
+    <input type="number" class="head" min=0 max=20 step="any" value=0 id="tailtime" onchange="numberDoLimit(id, value, 0, 20)">
+    <label>Tail:</label><label id="upch">0</label>
+    </div>
 
-<select id="record" onchange="selectDoTime(id)">
+     <div>
+     <select id="record" onchange="selectDoTime(id)">
                                       <option value="0">mixing</option>
                                       <option value="1">recording</option>
-</select>
+     </select>
+     <input type="button" value="Save" id="save" onclick="activator(id)">
+     <input type="button" value="Load" id="load" onclick="loader(id)">
+     </div>
+
+     <div>
+     <input type="button" class="preset" id="b0" value="0" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b1" value="1" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b2" value="2" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b3" value="3" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b4" value="4" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b5" value="5" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b6" value="6" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b7" value="7" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b8" value="8" onclick="setBank(id, value)">
+     <input type="button" class="preset" id="b9" value="9" onclick="setBank(id, value)">
+     </div>
+
+     <div>
+     <input type="button" class="preset" id="p0" value="0" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p1" value="1" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p2" value="2" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p3" value="3" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p4" value="4" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p5" value="5" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p6" value="6" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p7" value="7" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p8" value="8" onclick="setPresN(id, value)">
+     <input type="button" class="preset" id="p9" value="9" onclick="setPresN(id, value)">
+     </div>
+
+</div>
 
 
-<input type="button" value="Save" id="save" onclick="activator(id)">
-<input type="button" value="Load" id="load" onclick="loader(id)">
-
-<input type="button" class="preset" id="b0" value="0" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b1" value="1" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b2" value="2" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b3" value="3" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b4" value="4" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b5" value="5" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b6" value="6" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b7" value="7" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b8" value="8" onclick="setBank(id, value)">
-<input type="button" class="preset" id="b9" value="9" onclick="setBank(id, value)">
-
-
-<input type="button" class="preset" id="p0" value="0" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p1" value="1" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p2" value="2" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p3" value="3" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p4" value="4" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p5" value="5" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p6" value="6" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p7" value="7" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p8" value="8" onclick="setPresN(id, value)">
-<input type="button" class="preset" id="p9" value="9" onclick="setPresN(id, value)">
+<div class ="headerv">
+     <div>
+     <input type="button" class='viuw' value="matrix" id="matr" onclick="toggler('matrix', 'loopers', 'midiw', 'trackpad')">
+     </div>
+     <div>
+     <input type="button" class='viuw' value="midi" id="miid" onclick="toggler('midiw', 'loopers', 'matrix', 'trackpad')">
+     </div>
+     <div>
+     <input type="button" class='viuw' value="tpad" id="tpad" onclick="toggler('trackpad', 'midiw', 'loopers', 'matrix')">
+     </div>
+     <div>
+     <input type="button" class='viuw' value="looper" id="looo" onclick="toggler('loopers', 'matrix', 'midiw', 'trackpad')">
+     </div>
 </div>
 
 <script>
@@ -1232,8 +1288,9 @@ for (div =1; div <= num; div++) {
     for (vsl =0; vsl <= num; vsl++) {
         //mixer sliders
         document.write(vsl+
-            '<input type="range" class="vertical" min=0 max=1 value=0 step=0.001 id="r'+
-            vsl + 'c' + div +
+            '<input type="range" class="vertical" min=0 max=1 value=0 step=0.001 id="channel'+ 
+            div  + 'input' + vsl + 
+            //vsl + 'c' + div +
             '" oninput="sliderDo(id, value)"><br>');
     }
     //effect selector refer to global list efflist
@@ -1244,19 +1301,19 @@ for (div =1; div <= num; div++) {
     document.write('</select><br>');
     //parameters
     document.write('<span id="spc'+div+'p1"></span><br>'+
-                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="col'+
+                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="channel'+
                                       div + 'par' + 1 +
                                       '" oninput="sliderDo(id, value)"><br>');
     document.write('<span id="spc'+div+'p2"></span><br>'+
-                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="col'+
+                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="channel'+
                                       div + 'par' + 2 +
                                       '" oninput="sliderDo(id, value)"><br>');
     document.write('<span id="spc'+div+'p3"></span><br>'+
-                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="col'+
+                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="channel'+
                                       div + 'par' + 3 +
                                       '" oninput="sliderDo(id, value)"><br>');
     document.write('<span id="spc'+div+'p4"></span><br>'+
-                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="col'+
+                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="channel'+
                                       div + 'par' + 4 +
                                       '" oninput="sliderDo(id, value)"><br>');
 
@@ -1425,8 +1482,8 @@ function drawTp(e) {
     ctx_pad.font = "20px Arial";
     ctx_pad.fillText("min", 0, pad.height * 0.5);
     ctx_pad.fillText("max", pad.width * 0.95, pad.height * 0.5);
-    ctx_pad.fillText("min", pad.width * 0.5, pad.height * 0.05);
-    ctx_pad.fillText("max", pad.width * 0.5, pad.height* 0.95 + 15);
+    ctx_pad.fillText("max", pad.width * 0.5, pad.height * 0.05);
+    ctx_pad.fillText("min", pad.width * 0.5, pad.height* 0.95 + 15);
 
     //draw touch
     var x = (touchlist[0].clientX - left_at) / pad.width;
@@ -1576,6 +1633,13 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('                                      <option value="-2">-2</option>');
     document.write('                                      <option value="-3">-3</option>');
     document.write('</select><br>');
+
+    document.write('<input type="range" class="" min=0 max=1 value=0.5 step=0.001 id="ol_sppp' +lop+ '" oninput="sliderDo(id, value)">');
+
+    //document.write('<input type="button" class= "viuw" value="to 1" id="resetol_sppp' + lop+ '" onclick="to1(' + lop + ')">');
+    document.write('<input type="button" value="to 1" id="resetol_sppp' + lop+ '" onclick="to1(' + lop + ')">');
+    document.write('<input type="button" value="fPitch" id="ol_fixp' + lop+ '" onclick="fixpitch(' + lop + ')">');
+
     document.write('</div>');
 
     document.write('<div class="time">');
@@ -1611,7 +1675,7 @@ for (lop =1; lop <= loopersqty; lop++) {
      document.write('</div>');
 
     document.write('<div style="clear:both;"></div>');
-    document.write('<br>');
+    //document.write('<br>');
 }
 
 </script>
@@ -1619,7 +1683,6 @@ for (lop =1; lop <= loopersqty; lop++) {
 <div style="clear:both;"></div>
 <br>
 <div class="timew">
-    <br><br>
     <h1>Freez</h1>
 </div>
 <div style="width:12%;float:left;">
@@ -1707,6 +1770,7 @@ gichannels = 8
 
 
 ;matrix audio arrays
+; 5 chain (possible simultaneous preset), 9 inputs
 ga_in[][] init 5,9
 ga_out[][] init 5,9
 
@@ -1755,11 +1819,7 @@ giempty ftgen 10, 0, 256, -2,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,;240
     0, 0, 0, 0, 0, 0, 0
 ;tables from 11 to 137 are for user presets
-/*
-giSine ftgen 138, 0, 8192, 10, 1
-giTriangle ftgen 139, 0, 8192, 7, 0, 2048, 1, 4096, -1, 2048, 0
-giSquare ftgen 140, 0, 8192, 7, 0, 1, 1, 4095, 1, 1, -1, 4094, -1, 1, 0
-*/
+
 giSine ftgen 138, 0, 16384, 10, 1
 giTriangle ftgen 139, 0, 16384, 8, 0, 2048 *2, 1, 4096*2, -1, 2048*2, 0
 giSquare ftgen 140, 0, 16384, 8, 0, 10*2, 1, 4080*2, 1, 9*2, -1, 4080*2, -1, 10*2, 0
@@ -1894,7 +1954,7 @@ while kcol <= gichannels do
   ;read Matrix mixer
   krow = 0
   while krow <= gichannels do
-    Smm sprintfk "r%dc%d", krow, kcol
+    Smm sprintfk "channel%d_input%d", kcol, krow
     kval chnget Smm
     tablew kval, kindx, 5 + p5
     kindx = kindx + 1
@@ -1911,7 +1971,7 @@ while kcol <= gichannels do
   ;parametri
   kpar = 1
   while kpar <= 4 do
-    Spar sprintfk "col%dpar%d", kcol, kpar
+    Spar sprintfk "channel%dpar%d", kcol, kpar
     kvpar chnget Spar
     tablew kvpar, kindx, 5 + p5
     kindx = kindx + 1
@@ -2015,7 +2075,8 @@ while icol <= gichannels do
   ;read Matrix mixer
   irow = 0
   while irow <= gichannels do
-    Smm sprintf "r%dc%d", irow, icol
+    ;Smm sprintf "r%dc%d", irow, icol
+    Smm sprintfk "channel%d_input%d", icol, irow
     ival tab_i indx, 5 + p5
     chnset ival, Smm
     indx = indx + 1
@@ -2031,7 +2092,7 @@ while icol <= gichannels do
   ;parametri
   ipar = 1
   while ipar <= 4 do
-    Spar sprintf "col%dpar%d", icol, ipar
+    Spar sprintf "channel%dpar%d", icol, ipar
     ivpar  tab_i indx,  5 + p5
     chnset ivpar, Spar
     indx = indx + 1
@@ -2062,7 +2123,7 @@ od
 
 ;next availble memory location
 ;print indx
-;MIDI CC CONTROLLERS TO SAVE IN TABLE
+;MIDI CC CONTROLLERS READ FROM TABLE
 iccidx = 1
 while iccidx <= 8 do
     SccmidiC sprintf "ccmidiC%d", iccidx
@@ -2088,7 +2149,7 @@ while iccidx <= 8 do
     iccidx = iccidx + 1
 od
 
-;TRACKPAD CONTROLLERS TO SAVE IN TABLE
+;TRACKPAD CONTROLLERS READ FROM TABLE
 itpidx = 1
 while itpidx <= 4 do
     Stp_para sprintf "tp_para%d", itpidx
@@ -2177,10 +2238,7 @@ ga_in[1][0] = ain + galoop_in_ma
 ga_in[2][0] = ain + galoop_in_ma
 ga_in[3][0] = ain + galoop_in_ma
 ga_in[4][0] = ain + galoop_in_ma
-ga_in[5][0] = ain + galoop_in_ma
-ga_in[6][0] = ain + galoop_in_ma
-ga_in[7][0] = ain + galoop_in_ma
-ga_in[8][0] = ain + galoop_in_ma
+
 ;write to output mixer
 gaoutMix[0] = ain
 gaoutMix[1] = ain
@@ -2271,27 +2329,17 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-krms rms ain
-kswing limit krms, 0, 1
-kshapeamt = 1 - (kpar1 ^ 5) + 0.2 * (1 - kswing)
-kshapeamt limit kshapeamt, 0, 1
-ashapa powershape ain, kshapeamt
-ashap powershape ashapa, kshapeamt
+
+itl init 1024
+ishape ftgentmp 0, 123, itl, 7, 1, itl * 0.2, 0.8, itl * 0.7, 0.4, itl * 0.1, 0.05
+kshapeamt tab itl * kpar1, ishape
+
+ashap powershape ain, kshapeamt
 ashhp buthp ashap, kpar2 * kpar2 * 20000 + 20
 ashlp butlp ashhp, kpar3 * kpar3 * 20000 + 20
 aoutl AtanLimit ashlp
-;gate
-krms rms ain 
-kthreshold init 0.0005
-ktrig trigger krms, kthreshold, 1
-if krms > kthreshold then 
-    kgate_ = 1
-else
-    kgate_ = 0
-endif
-kgate port kgate_, 0.01
+aout = aoutl * kpar4 * kpar4 * 4
 
-aout = aoutl * kpar4 * kpar4 * 4 * kgate
 $OUTMIXT
 endin
 
@@ -2311,7 +2359,8 @@ $PARAMTP(4'giport)
 
 reset:
 isizehalf = 16384
-iroundness = 100
+;iroundness = 100
+iroundness = isizehalf * 0.05
 
 kslope = (isizehalf - iroundness) * (1-kpar_2) * 0.99
 islope = i(kslope)
@@ -2591,7 +2640,7 @@ $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
 
-ifno ftgentmp 0, 123, 8192, 10, 1
+ifno ftgentmp 0, 123, 16384, 10, 1
 iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
 ftmorf kpar3  * 2, iftfn, ifno
 amod oscil 0.5, kpar1 * 30, ifno
@@ -2644,24 +2693,25 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-kdelay = kpar1 * 0.03
+kdelay = kpar1 * 0.03 + 0.001
 kfreq = kpar2 * 5
 
-iminT = .007
-achorus1 oscili 1, kfreq, giSine, 0 
-achorus1 = ((achorus1 + 1) * .5 * (kdelay - iminT)) + iminT
-achorus2 oscili 1, kfreq, giSine, 0.33333
-achorus2 = ((achorus2 + 1) * .5 * (kdelay - iminT)) + iminT
-achorus3 oscili 1, kfreq, giSine, 0.66666
-achorus3 = ((achorus3 + 1) * .5 * (kdelay - iminT)) + iminT
+iminT = 0.004
+achorus1 oscili 0.5, kfreq, giSine, 0 
+achorus1 = ((achorus1 + 0.5) * kdelay) 
+achorus2 oscili 0.5, kfreq, giSine, 0.33333
+achorus2 = ((achorus2 + 0.5) * kdelay)
+achorus3 oscili 0.5, kfreq, giSine, 0.66666
+achorus3 = ((achorus3 + 0.5) * kdelay)
 
-adell delayr 1
-achor1 deltap3 achorus1
-achor2 deltap3 achorus2
-achor3 deltap3 achorus3
-aut = achor1 + achor2 + achor3
-	delayw ain + aut * kpar3 * 0.3
-aout CosSinMix ain, aut, kpar4
+adell delayr 0.035
+achor1 deltap3 achorus1 + iminT
+achor2 deltap3 achorus2 + iminT
+achor3 deltap3 achorus3 + iminT
+adetlaps = (achor1 + achor2 + achor3)
+	delayw ain +  adetlaps * kpar3 * 0.3
+
+aout CosSinMix ain, adetlaps, kpar4
 $OUTMIXT
 endin
 
@@ -2749,7 +2799,7 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 
-ifno ftgentmp 0, 0, 8192, 10, 1
+ifno ftgentmp 0, 0, 16384, 10, 1
 iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
 ftmorf kpar2  * 2, iftfn, ifno
 
@@ -3261,7 +3311,7 @@ istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
 kstep tab round(kpar1 * 4), istep
 ktime port kstep * (1 + kpar2) * 60 / gkbpm, giport
 
-ifno ftgentmp 0, 123, 8192, 10, 1
+ifno ftgentmp 0, 123, 16384, 10, 1
 iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
 ftmorf kpar3  * 2, iftfn, ifno
 amod oscil 0.5, 1/ktime, ifno
@@ -3560,6 +3610,14 @@ chnset 1, "autothrmode1"
 chnset 1, "autothrmode2"
 chnset 1, "autothrmode3"
 chnset 1, "autothrmode4"
+chnset 0.5, "ol_sppp1"
+chnset 0.5, "ol_sppp2"
+chnset 0.5, "ol_sppp3"
+chnset 0.5, "ol_sppp4"
+chnset 0, "ol_fixp1"
+chnset 0, "ol_fixp2"
+chnset 0, "ol_fixp3"
+chnset 0, "ol_fixp4"
 event_i "i", 1004.1, 0, -1, 1, 1
 event_i "i", 1004.2, 0, -1, 2, 1
 event_i "i", 1004.3, 0, -1, 3, 1
@@ -3738,7 +3796,7 @@ ktotaloutv max_k galtot + gartot , kupdate, 1
 
 kinstmonitor init 1000
 kch active kinstmonitor
-;printk2 kch
+
 if kupdate == 1 then
     chnset kmatrixoutv, "matrixoutv"
     chnset ktotaloutv, "totaloutv"
