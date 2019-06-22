@@ -1,0 +1,13 @@
+#define EFF_DELAYBPM#
+
+istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
+kstep tab round(kpar1 * 4), istep
+ktime port kstep * (1 + kpar2) * 60 / gkbpm, giport
+
+abuf	delayr	5
+adel 	deltap	ktime
+	delayw	ain + adel * kpar3
+
+aout CosSinMix ain, adel, kpar4
+
+#

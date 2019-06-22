@@ -1,0 +1,5 @@
+#define EFF_PITCHSHIFTER#
+ktransp = (kpar1 - 0.5) * 48; transpose +- 24
+ares PitchShifter_akk ain, ktransp, kpar2, gihalfsine
+aout CosSinMix ain, ares, kpar3
+#

@@ -1,0 +1,35 @@
+#define EFF_AUTOFREEZE#
+
+fanal pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
+
+reset:
+kslope =0.01 + kpar_2 * 3
+islope = i(kslope)
+kenv linseg 0, islope, 1, 0.01, 1
+rireturn
+
+kfreeza init 0
+knext init 0
+k_t_rms_ max_k ain, 1, 1
+k_t_rms port k_t_rms_, 0.1
+ktrig trigger k_t_rms, kpar_1 * kpar_1, 0
+if knext == 1 then
+    kfreeza = 1
+    knext = 0
+    reinit reset
+endif
+if ktrig == 1 then
+    kfreeza = 0
+    knext = 1
+endif
+
+kscal jspline 0.0594 * 0.5 * kpar3, 0.1, 0.1 + 3 * kpar3
+
+fsig pvsfreeze fanal, kfreeza, kfreeza
+fmodu pvscale fsig, 1 - kscal
+fmodd pvscale fsig, 1 +  kscal
+aoutu pvsynth fmodu
+aoutd pvsynth fmodd
+aout = (aoutu + aoutd) * kenv / 1.41
+
+#

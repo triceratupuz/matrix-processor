@@ -1,0 +1,4 @@
+#define EFF_HIGHPASS#
+aout_ buthp ain, 5 + kpar1 * kpar1 * 8000
+aout = aout_ * kpar2
+#

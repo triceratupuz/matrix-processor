@@ -1,0 +1,6 @@
+#define EFF_FLANGER#
+adel oscil 0.499, kpar1, giSine
+adel = adel + 0.5
+ares flanger ain, adel * 0.02 * kpar2, kpar3 * 0.99
+aout CosSinMix ain, ares, kpar4
+#

@@ -1,0 +1,14 @@
+#define EFF_TREMOLOBPM#
+
+istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
+kstep tab round(kpar1 * 4), istep
+ktime port kstep * (1 + kpar2) * 60 / gkbpm, giport
+
+ifno ftgentmp 0, 123, 16384, 10, 1
+iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
+ftmorf kpar3  * 2, iftfn, ifno
+amod oscil 0.5, 1/ktime, ifno
+ares = (amod + 0.5) * 2 * ain
+
+aout CosSinMix ain, ares, kpar4
+#

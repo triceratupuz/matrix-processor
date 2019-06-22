@@ -1,0 +1,7 @@
+#define EFF_DEGRADER#
+;degrader taken from Ian Mc Curdy LoFi.csd
+kvalues	 pow 2, kpar2 * 16
+abit = (int((ain/0dbfs)*kvalues))/kvalues
+afold fold abit, kpar1 * 10
+aout CosSinMix ain, afold, kpar3
+#

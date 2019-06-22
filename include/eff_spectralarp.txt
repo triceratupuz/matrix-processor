@@ -1,0 +1,28 @@
+#define EFF_SPECTRALARP#
+kfrr = kpar1 * kpar1 * 30
+kl = kpar2 * kpar2
+kh = kpar3 * kpar3
+
+fftin     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
+
+ifno ftgentmp 0, 0, gifftsize, 7, 0, gifftsize, 1
+kbin init 0
+kbin_ oscil 1, kfrr, ifno
+
+if kpar2 < kpar3 then
+    kbin = kl + kbin_ * (kh - kl)
+else
+    kbin = kl - kbin_ * (kl - kh)
+endif
+
+kdepth init 1
+kgain init 10
+farp pvsarp fftin, kbin, kdepth, kgain
+arpeg      pvsynth farp	
+
+;enveloping
+ifnoenv ftgentmp 0, 0, gifftsize, 7, 0, gifftsize/2, 1, gifftsize/2, 0
+aenv oscil kpar4, kfrr, ifnoenv
+aenv = 1 - aenv
+aout = arpeg * aenv
+#

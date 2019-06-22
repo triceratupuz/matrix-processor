@@ -1,0 +1,34 @@
+#define EFF_SQUARER#
+
+reset:
+isizehalf = 16384
+;iroundness = 100
+iroundness = isizehalf * 0.05
+
+kslope = (isizehalf - iroundness) * (1-kpar_2) * 0.99
+islope = i(kslope)
+itfun ftgentmp 0, 123, isizehalf * 2, 7, -1, isizehalf - islope - iroundness, -1, iroundness, -0.95, islope, 0, islope, 0.95, iroundness, 1, isizehalf - islope - iroundness, 1
+
+ainn AtanLimit ain * kpar1 * 2
+asquared tab (ainn + 1) * isizehalf, itfun
+rireturn
+
+;check for update slowly
+ktrig  metro 10
+kch changed kpar_2
+kchng init 0
+if kchng == 0 && kch == 1 then
+    kchng = 1
+endif
+; reinit the transfer function
+if kchng == 1 && ktrig == 1 then
+    reinit reset
+    kchng = 0
+endif
+
+aenva butlp asquared, 30 + kpar3 * kpar3 * 20000
+
+aoutb balance aenva, ain
+aout = aoutb * kpar4 * kpar4 * 8
+
+#

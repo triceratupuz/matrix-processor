@@ -1,0 +1,34 @@
+#define EFF_REVERBSHROEDER#
+
+denorm ain
+; four parallel comb filters
+;kRvt reverb time
+kRvt = kpar1 * 3
+imaxlpt1 init 0.0297
+imaxlpt2 init 0.0371
+imaxlpt3 init 0.0411
+imaxlpt4 init 0.0437
+;A
+a1L vcomb ain, kRvt, imaxlpt1 * kpar2, imaxlpt1 * 3 
+a2L vcomb ain, kRvt, imaxlpt2 * kpar2, imaxlpt2 * 3 
+a3L vcomb ain, kRvt, imaxlpt3 * kpar2, imaxlpt3 * 3 
+a4L vcomb ain, kRvt, imaxlpt4 * kpar2, imaxlpt4 * 3 
+asumL sum a1L, a2L, a3L, a4L
+;B
+a1R vcomb ain, kRvt, imaxlpt1 * kpar2 * .97, imaxlpt1 * 3 
+a2R vcomb ain, kRvt, imaxlpt2 * kpar2 * .96, imaxlpt2 * 3 
+a3R vcomb ain, kRvt, imaxlpt3 * kpar2 * .95, imaxlpt3 * 3
+a4R vcomb ain, kRvt, imaxlpt4 * kpar2 * .94, imaxlpt4 * 3 
+asumR sum a1R, a2R, a3R, a4R
+
+; two allpass filters in series
+imaxlpt5 init 0.005
+;A
+a5L valpass asumL + asumR * 0.1, 0.1, imaxlpt5 * kpar3, imaxlpt5 * 3
+aOutL alpass a5L, 0.1, 0.02295
+;B
+a5R valpass asumR + asumL * 0.1, 0.1, imaxlpt5 * kpar3, imaxlpt5 * 3
+aOutR alpass a5R, 0.1, 0.02287
+
+aout CosSinMix ain, (aOutL + aOutR) / 1.41, kpar4
+#

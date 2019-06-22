@@ -1,0 +1,8 @@
+#define EFF_BRANDTSEGGCOMP#
+
+kingain = kpar1 * kpar1 * 4
+kthresh = -150 + kpar2 * 150
+kratio = 1 + kpar3 * 30
+aout BrandtseggComp ain, kingain, kthresh, kratio
+
+#

@@ -1,0 +1,16 @@
+#define EFF_PSEUDOGRAIN#
+;kpar1 - granule time
+;kpar2 - delay ratio
+;kpar3 - delay feedback
+;kpar4 - D-W
+itl = ftlen(gigrainenv)
+aphas phasor 1 / (0.010 + kpar1 * 0.040)
+amod tablei aphas * itl, gigrainenv
+awin = ain * amod
+;delay
+abuf	delayr	1
+adel 	deltap3	(0.010 + kpar1 * 0.040) * kpar2
+	delayw	awin + adel * kpar3
+
+aout CosSinMix ain, awin + adel, kpar4
+#

@@ -1,0 +1,13 @@
+#define EFF_POWERSHAPER#
+
+itl init 1024
+ishape ftgentmp 0, 123, itl, 7, 1, itl * 0.2, 0.8, itl * 0.7, 0.4, itl * 0.1, 0.05
+kshapeamt tab itl * kpar1, ishape
+
+ashap powershape ain, kshapeamt
+ashhp buthp ashap, kpar2 * kpar2 * 20000 + 20
+ashlp butlp ashhp, kpar3 * kpar3 * 20000 + 20
+aoutl AtanLimit ashlp
+aout = aoutl * kpar4 * kpar4 * 4
+
+#

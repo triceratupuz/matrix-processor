@@ -1,0 +1,4 @@
+#define EFF_CLIP#
+aout_ clip ain * kpar1 * 2, 0, 0.5
+aout = aout_ * kpar2 * 3
+#

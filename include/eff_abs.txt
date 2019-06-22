@@ -1,0 +1,5 @@
+#define EFF_ABS#
+abss = abs(ain)
+aabs dcblock2 abss
+aout = ain * kpar2 + aabs * 2 * kpar1
+#

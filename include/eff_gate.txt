@@ -1,0 +1,42 @@
+#define EFF_GATE#
+
+reset:
+ihalftab = 16384
+knull = 0.0001 + kpar_1 * kpar_1 * 0.999
+inull = i(knull)
+;gating function 
+ifuncth ftgentmp 0, 123, ihalftab * 2, 6, 1, ihalftab - ihalftab * inull, 0,  ihalftab * inull, 0, ihalftab * inull, 0, ihalftab - ihalftab * inull, 1
+
+isteep = 0.99
+ifunctl ftgentmp 0, 123, ihalftab * 2, 6, 0, ihalftab - (ihalftab * inull) * isteep, 0, (ihalftab * inull) * (1 - isteep), 1, ihalftab * inull, 1, ihalftab * inull, 1,  (ihalftab * inull) * (1 - isteep), 0, ihalftab - (ihalftab * inull) * isteep, 0
+
+aouth tab (ain + 1) * ihalftab, ifuncth
+aoutl tab (ain + 1) * ihalftab, ifunctl
+rireturn
+
+;check for update slowly
+ktrig  metro 10
+kch changed kpar_1
+kchng init 0
+if kchng == 0 && kch == 1 then
+    kchng = 1
+endif
+
+; reinit the transfer function
+if kchng == 1 && ktrig == 1 then
+    reinit reset
+    kchng = 0
+endif
+
+;mixing variants
+aout = 0
+if kpar_2 > 0.5 then
+    kouth_ downsamp aouth
+    kouth portk kouth_, 0.001 + 0.15 * kpar3
+    aout = kouth * ain
+else
+    koutl_ downsamp aoutl
+    koutl portk koutl_, 0.001 + 0.15 * kpar3
+    aout = koutl * ain
+endif
+#

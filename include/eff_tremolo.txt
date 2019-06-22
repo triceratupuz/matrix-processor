@@ -1,0 +1,9 @@
+#define EFF_TREMOLO#
+ifno ftgentmp 0, 123, 16384, 10, 1
+iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
+ftmorf kpar3  * 2, iftfn, ifno
+amod oscil 0.5, kpar1 * 30, ifno
+ares = (amod + 0.5) * kpar2 * 3 * ain
+
+aout CosSinMix ain, ares, kpar4
+#

@@ -1,0 +1,14 @@
+#define EFF_DELAYCRAP#
+awobble_ oscil kpar2 * .003, 1 / (4 * kpar1), giSine
+awobble = 1 + awobble_
+
+abuf delayr 8
+adeltap deltapi 4 * kpar1 * awobble
+ahp buthp adeltap, 20 + 500 * kpar2
+alp butlp ahp, 20000 - 15000 * kpar2
+anoise noise 0.001 * kpar2, 0.2
+afeed AtanLimit alp  + anoise
+delayw	ain + afeed * kpar3 * (1.2 + kpar2);compensation
+
+aout CosSinMix ain, afeed, kpar4
+#

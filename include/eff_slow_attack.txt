@@ -1,0 +1,22 @@
+#define EFF_SLOW_ATTACK#
+
+klogic init 0
+ktime init 2
+krms rms ain * 1.42
+
+ktratt trigger krms, kpar1, 0
+;attack
+if ktratt == 1 && changed(ktratt) == 1 then
+    klogic = 1
+    ktime = 2
+endif
+ktrrel trigger krms, 0.001, 1
+;release
+if ktrrel == 1 && changed(ktrrel) == 1 then
+    klogic = 0
+    ktime = 0.001
+endif
+kattenv portk klogic, kpar2 * ktime
+aout = kattenv * ain
+
+#

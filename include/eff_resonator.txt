@@ -1,0 +1,7 @@
+#define EFF_RESONATOR#
+kfrq = 20 + kpar1 * kpar1 * 2000
+kcutoff = 40 + kpar2 * kpar2 * 15000
+kfeed = 1 - ((1 - kpar3) * (1- kpar3))
+aout wguide1 ain, kfrq, kcutoff, kfeed
+aout CosSinMix ain, aout, kpar4
+#

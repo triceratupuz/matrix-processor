@@ -1,0 +1,7 @@
+#define EFF_RINGMODULATOR#
+ifno ftgentmp 0, 0, 16384, 10, 1
+iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
+ftmorf kpar2  * 2, iftfn, ifno
+asine oscil 1, kpar1 * kpar1 * 10000, ifno
+aout CosSinMix ain, ain * asine, kpar3
+#

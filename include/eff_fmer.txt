@@ -1,0 +1,9 @@
+#define EFF_FMER#
+kqual init 0.01
+kpit = (kpar1 - 0.5) * 48; carrier transpose +- 24
+ktransp = (kpar2 - 0.5) * 48; modulator transpose +- 24
+kspread = (kpar3 - 0.5) * 48; modulator spread +- 24
+amod PitchShifter_akk ain, ktransp, kqual, gihalfsine
+afm PitchShifter_aak ain, kpit + amod * kspread, kqual, gihalfsine
+aout CosSinMix ain, afm, kpar4
+#

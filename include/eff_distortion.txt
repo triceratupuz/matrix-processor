@@ -1,0 +1,3 @@
+#define EFF_DISTORTION#
+aout distort1 ain, kpar1 * 10, kpar2 * 10, kpar3, kpar4
+#

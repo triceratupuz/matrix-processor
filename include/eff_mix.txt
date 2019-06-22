@@ -1,0 +1,7 @@
+#define EFF_MIX#
+kphase = 1
+if kpar2 > 0.5 then
+	kphase = -1
+endif
+aout  = ain * kpar1 * kpar1 * 4 * kphase
+#

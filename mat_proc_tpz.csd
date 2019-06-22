@@ -1,3 +1,4 @@
+
 <CsoundSynthesizer>
 <CsLicense>
 </CsLicense>
@@ -275,6 +276,28 @@ var effectsData = [[0, "nothing", "", "", "", ""],
 
 //channels
 var channels = 8;
+//channels definitions = [channelname, MIDI/TP/controllable]
+var channChanns = [["channel_n_in", 1],
+	["channel_n_input1", 1],
+	["channel_n_input2", 1],
+	["channel_n_input3", 1],
+	["channel_n_input4", 1],
+	["channel_n_input5", 1],
+	["channel_n_input6", 1],
+	["channel_n_input7", 1],
+	["channel_n_input8", 1],
+	["eff_n_", 0],
+	["channel_n_par1", 1],
+	["channel_n_par2", 1],
+	["channel_n_par3", 1],
+	["channel_n_par4", 1],
+	["pan_n_", 1],
+	["volmat_n_", 1],
+	["volume_n_", 1]];
+
+
+
+
 
 //effect number and names
 var efflist = createEffList(effectsData);
@@ -462,12 +485,9 @@ if (navigator.requestMIDIAccess) {
 // midi functions
 function onMIDISuccess(midiAccess) {
     // success
-    //console.log('MIDI Access Object', midiAccess);
-    //writeToLog('log_in', midiAccess);
     //csoundApp.setControlChannel( "midiready", 1);
     var inputs = midiAccess.inputs.values();
     for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-	//input.value.onmidimessage = onMIDIMessage;
 	input.value.onmidimessage = loaderMidi;
     }
 }
@@ -494,18 +514,14 @@ var cc_cha_def =[];
 
 function createCcChannelNumber(){
     //to be called at init gui
-    //see instr 50 for channel sequence
-    var cha__ = ["channel_n_input0", "channel_n_input1", "channel_n_input2", 
-        "channel_n_input3", "channel_n_input4", "channel_n_input5", 
-        "channel_n_input6", "channel_n_input7", "channel_n_input8",// "eff_n_",
-        "channel_n_par1", "channel_n_par2", "channel_n_par3", "channel_n_par4",  
-        "pan_n_", "volmat_n_", "volume_n_"];
-
+    //see instr 50 and channChanns for channel sequence
     var toappend = "";
-    for(var col = 1; col<=channels; col++){
-        for(var i = 0; i < cha__.length; i++){
-            toappend = cha__[i].replace("_n_", col.toString());
-            cc_cha_def.push(toappend);
+    for (var col = 1; col <= channels; col++){
+        for(var i = 0; i < channChanns.length; i++){
+			if (channChanns[i][1] == 1) {
+            	toappend = channChanns[i][0].replace("_n_", col.toString());
+            	cc_cha_def.push(toappend);
+			}
         }
     }
 }
@@ -622,20 +638,6 @@ channel named after the slider id*/
 
 
 
-
-function checkDo(id) {
-/*to dispatch the value to the software 
-channel named after the checkbox id*/
-  if (document.getElementById(id).checked) {
-    csoundApp.setControlChannel(id, 1.0);
-  } else {
-    csoundApp.setControlChannel(id, 0.0);
-  }
-}
-
-
-
-
 function activator(id) {
     csoundApp.setControlChannel(id, 1.0);
     setTimeout(function(id) {
@@ -745,33 +747,23 @@ function channelSetter(channel) {
 
 function updgui() {
     /*read channels to update gui*/
+	//matrix
     var channel = "";
-    var num = channels;
-    for (col =1; col <= num; col++) {
-        //matrix
-        for (vsl =0; vsl <= num; vsl++) {
-            channel = "channel" + col.toString() + "input" + vsl.toString();
-            channelSetter(channel);
-        }
-        //effect
-        channel = "eff" + col.toString();
-        channelSetter(channel);
-        effChange(channel);//to update parameters name indication
-        //parameters
-        for (par =1; par <= 4; par++) {
-            channel = "channel" + col.toString() + "par" + par.toString();1
-            channelSetter(channel);
-        }
-        //pan
-        channel = "pan" + col.toString();
-        channelSetter(channel);
-        //volumes
-        channel = "volmat" + col.toString();
-        channelSetter(channel);
-        channel = "volume" + col.toString();
-        channelSetter(channel);
-     }
-     //update midi cc
+	for (col = 1; col <= channels; col++) {
+		for (var chnn = 0; chnn < channChanns.length; chnn++){
+			channel = channChanns[chnn][0].replace("_n_", col.toString());
+			if (channel.indexOf("eff") > -1) {
+				//if effect
+				channelSetter(channel);
+       			effChange(channel);//to update parameters name indication
+			} else {
+				//all other slider in matrix
+				channelSetter(channel);
+			}
+		}
+	}
+	
+    //update midi cc
     var elmiid = document.getElementById("miid");
     elmiid.style.background = "#bbbbbb";
 
@@ -978,16 +970,6 @@ function effChange(id) {
     document.getElementById("spc"+ ch +"p4").textContent  = para[indexx][3];
 }
 
-
-function panic(id) {
-	//set preset to 0, load updategui
-	//id="presetn"
-	var pres = document.getElementById("presetn");
-	pres.value = 0;
-	csoundApp.setControlChannel("presetn", 0);
-	//id="load"
-	activator("load");
-}
 
 
 function toggler(id1, id2, id3, id4) {
@@ -1278,60 +1260,43 @@ function metronome() {
 
 
 
-
 //generate mixer gui
 document.write('<div id="matrix" class="mixer">');
-var num =channels;
-for (div =1; div <= num; div++) {
-    //document.write('<h1>' + div+'</h1>');
-    document.write('channel '+div+'<br>');
-    for (vsl =0; vsl <= num; vsl++) {
-        //mixer sliders
-        document.write(vsl+
-            '<input type="range" class="vertical" min=0 max=1 value=0 step=0.001 id="channel'+ 
-            div  + 'input' + vsl + 
-            //vsl + 'c' + div +
-            '" oninput="sliderDo(id, value)"><br>');
-    }
-    //effect selector refer to global list efflist
-    document.write('<select id="eff'+div+'"onchange="effChange(id)">');
-    for (var eff =0; eff < efflist.length; eff++) {
-        document.write('<option value="' + efflist[eff][0] +'">' + efflist[eff][1] + ' </option>');
-    }
-    document.write('</select><br>');
-    //parameters
-    document.write('<span id="spc'+div+'p1"></span><br>'+
-                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="channel'+
-                                      div + 'par' + 1 +
-                                      '" oninput="sliderDo(id, value)"><br>');
-    document.write('<span id="spc'+div+'p2"></span><br>'+
-                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="channel'+
-                                      div + 'par' + 2 +
-                                      '" oninput="sliderDo(id, value)"><br>');
-    document.write('<span id="spc'+div+'p3"></span><br>'+
-                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="channel'+
-                                      div + 'par' + 3 +
-                                      '" oninput="sliderDo(id, value)"><br>');
-    document.write('<span id="spc'+div+'p4"></span><br>'+
-                                      '<input type="range" min=0 max=1 value=0 step=0.001 id="channel'+
-                                      div + 'par' + 4 +
-                                      '" oninput="sliderDo(id, value)"><br>');
-
-    //pan
-    document.write('pan<br>'+
-        '<input type="range" min=0 max=1 value=0.5 step=0.001 id="pan'+
-        div +
-        '" oninput="sliderDo(id, value)"><br>');
-    //volume
-    document.write('volume<br>'+
-        'm<input type="range" class="vertical" min=0 max=1 value=0.5 step=0.001 id="volmat'+
-        div +
-        '" oninput="sliderDo(id, value)">'+
-        '<input type="range" class="vertical" min=0 max=1 value=0 step=0.001 id="volume'+
-        div +
-        '" oninput="sliderDo(id, value)">o<br>');
-    //close column
-    //document.write("</div>");
+for (div = 1; div <= channels; div++) {
+	document.write('channel '+ div +'<br>');
+              var vsl = 0;
+	for (item = 0; item < channChanns.length; item++){
+		var channe = channChanns[item][0].replace("_n_", div.toString());
+		if (channe.indexOf("in") > -1){
+			//vertical slider
+                                          if (vsl == 0) {var vsls = "in";}
+                                          else {var vsls = vsl.toString();}
+			 document.write(vsls + '<input type="range" class="vertical" min=0 max=1 value=0 step=0.001 id="' + channe +'" oninput="sliderDo(id, value)"><br>');
+                                         vsl +=1;
+		} else if (channe.indexOf("eff") > -1){
+			//effect selector
+			document.write('<select id="' + channe +'"onchange="effChange(id)">');
+		    for (var eff =0; eff < efflist.length; eff++) {
+		        document.write('<option value="' + efflist[eff][0] +'">' + efflist[eff][1] + ' </option>');
+		    }
+		    document.write('</select><br>');
+		} else if (channe.indexOf("par") > -1){
+			//effects parameters
+			var parnnn = channe.substr(channe.length -1);//number of parameter
+			document.write('<span id="spc'+ div + 'p'+ parnnn + '"></span><br>'+ 
+						'<input type="range" min=0 max=1 value=0 step=0.001 id="' + channe + '" oninput="sliderDo(id, value)"><br>');
+		} else if (channe.indexOf("pan") > -1){
+			//pan slider
+			document.write('pan<br>'+
+    			'<input type="range" min=0 max=1 value=0.5 step=0.001 id="' + channe + '" oninput="sliderDo(id, value)"><br>');
+		} else if (channe.indexOf("volmat") > -1){
+			//volume matrix slider
+			document.write('m<input type="range" class="vertical" min=0 max=1 value=0.5 step=0.001 id="' + channe + '" oninput="sliderDo(id, value)">');
+		} else if (channe.indexOf("volume") > -1){
+			//volume out slider
+			document.write('<input type="range" class="vertical" min=0 max=1 value=0.5 step=0.001 id="' + channe + '" oninput="sliderDo(id, value)">o<br>');
+		}
+	}
 }
 document.write("</div>");
 </script>
@@ -1762,10 +1727,64 @@ gScurDir init "$GSCURDIR"
 #include "PitchShifter_aak.txt"
 #include "PitchShifter_akk.txt"
 #include "looper.txt"
+
 ;MACROS see options
 #include "macros.txt"
 
-;number of channels
+;EFFECTS see options
+#include "eff_4BGEQ.txt"
+#include "eff_abs.txt"
+#include "eff_autofreeze.txt"
+#include "eff_brandtseggcomp.txt"
+#include "eff_chorus.txt"
+#include "eff_clip.txt"
+#include "eff_condorcab.txt"
+#include "eff_degrader.txt"
+#include "eff_delay.txt"
+#include "eff_delaybpm.txt"
+#include "eff_delaycrap.txt"
+#include "eff_delayreverse.txt"
+#include "eff_distortion.txt"
+#include "eff_envlowpass.txt"
+#include "eff_flanger.txt"
+#include "eff_fmer.txt"
+#include "eff_frequencyshift.txt"
+#include "eff_gate.txt"
+#include "eff_harmonizer.txt"
+#include "eff_highpass.txt"
+#include "eff_hilbert.txt"
+#include "eff_leslie.txt"
+#include "eff_lowpass.txt"
+#include "eff_lpf18.txt"
+#include "eff_mix.txt"
+#include "eff_parametric.txt"
+#include "eff_phaser.txt"
+#include "eff_pitchshifter.txt"
+#include "eff_pitchshifterspectral.txt"
+#include "eff_powershaper.txt"
+#include "eff_pseudograin.txt"
+#include "eff_resonator.txt"
+#include "eff_reverb.txt"
+#include "eff_reverbenv.txt"
+#include "eff_reverbmodulated.txt"
+#include "eff_reverbshroeder.txt"
+#include "eff_ringmodulator.txt"
+#include "eff_shortenv.txt"
+#include "eff_slow_attack.txt"
+#include "eff_spectralarp.txt"
+#include "eff_squarer.txt"
+#include "eff_tremolo.txt"
+#include "eff_tremolobpm.txt"
+#include "eff_vocalfilter.txt"
+#include "eff_wha.txt"
+
+
+
+
+
+;GLOBALS
+
+;number of channels same as js var channels
 gichannels = 8
 
 
@@ -1895,26 +1914,6 @@ if (ksave == 1) && (changed(ksave)== 1) && (kpreset > 0) then
 endif
 
 
-;clean direct to out mixer,
-;maybe not needed 
-;since instr 90 is always overwriting new data
-gaoutMix[0] = 0
-gaoutMix[1] = 0
-;clean matrix audio output to out mixer
-gaoutMix[2] = 0
-gaoutMix[3] = 0
-;clean Loop1 audio output to out mixer
-gaoutMix[4] = 0
-gaoutMix[5] = 0
-;clean Loop2 audio output to out mixer
-gaoutMix[6] = 0
-gaoutMix[7] = 0
-;clean Loop3 audio output to out mixer
-gaoutMix[8] = 0
-gaoutMix[9] = 0
-;clean Loop3 audio output to out mixer
-gaoutMix[10] = 0
-gaoutMix[11] = 0
 ;prepare dac/recorder outputs
 galtot = 0
 gartot = 0
@@ -1952,9 +1951,15 @@ kindx   = 0
 while kcol <= gichannels do
 
   ;read Matrix mixer
-  krow = 0
+  ;input
+  Smm sprintfk "channel%din", kcol
+  kval chnget Smm
+  tablew kval, kindx, 5 + p5
+  kindx = kindx + 1
+  ;matrix inputs
+  krow = 1
   while krow <= gichannels do
-    Smm sprintfk "channel%d_input%d", kcol, krow
+    Smm sprintfk "channel%dinput%d", kcol, krow
     kval chnget Smm
     tablew kval, kindx, 5 + p5
     kindx = kindx + 1
@@ -2073,10 +2078,16 @@ indx   = 0
 while icol <= gichannels do
 
   ;read Matrix mixer
-  irow = 0
+  ;input
+  Smm sprintfk "channel%din", icol
+  ival tab_i indx, 5 + p5
+  chnset ival, Smm
+  indx = indx + 1
+
+  ;matrix mixer
+  irow = 1
   while irow <= gichannels do
-    ;Smm sprintf "r%dc%d", irow, icol
-    Smm sprintfk "channel%d_input%d", icol, irow
+    Smm sprintfk "channel%dinput%d", icol, irow
     ival tab_i indx, 5 + p5
     chnset ival, Smm
     indx = indx + 1
@@ -2259,19 +2270,13 @@ ga_out[p5][p4] = 0
 endin
 
 
-
 instr 101;mix
 $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
-kphase = 1
-if kpar2 > 0.5 then
-	kphase = -1
-endif
-aout  = ain * kpar1 * kpar1 * 4 * kphase
+$EFF_MIX
 $OUTMIXT
 endin
-
 
 
 instr 102; distortion
@@ -2280,33 +2285,27 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-aout distort1 ain, kpar1 * 10, kpar2 * 10, kpar3, kpar4
+$EFF_DISTORTION
 $OUTMIXT
 endin
-
 
 
 instr 103;clip
 $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
-aout_ clip ain * kpar1 * 2, 0, 0.5
-aout = aout_ * kpar2 * 3
+$EFF_CLIP
 $OUTMIXT
 endin
-
 
 
 instr 104;abs
 $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
-abss = abs(ain)
-aabs dcblock2 abss
-aout = ain * kpar2 + aabs * 2 * kpar1
+$EFF_ABS
 $OUTMIXT
 endin
-
 
 
 instr 105; degrader taken from Ian Mc Curdy LoFi.csd
@@ -2314,13 +2313,9 @@ $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-kvalues	 pow 2, kpar2 * 16
-abit = (int((ain/0dbfs)*kvalues))/kvalues
-afold fold abit, kpar1 * 10
-aout CosSinMix ain, afold, kpar3
+$EFF_DEGRADER
 $OUTMIXT
 endin
-
 
 
 instr 106;powershaper
@@ -2329,21 +2324,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-
-itl init 1024
-ishape ftgentmp 0, 123, itl, 7, 1, itl * 0.2, 0.8, itl * 0.7, 0.4, itl * 0.1, 0.05
-kshapeamt tab itl * kpar1, ishape
-
-ashap powershape ain, kshapeamt
-ashhp buthp ashap, kpar2 * kpar2 * 20000 + 20
-ashlp butlp ashhp, kpar3 * kpar3 * 20000 + 20
-aoutl AtanLimit ashlp
-aout = aoutl * kpar4 * kpar4 * 4
-
+$EFF_POWERSHAPER
 $OUTMIXT
 endin
-
-
 
 
 instr 107;squarer
@@ -2356,69 +2339,18 @@ $PARAMTNP(2)
 $PARAMTP(3'giport)
 ;volume
 $PARAMTP(4'giport)
-
-reset:
-isizehalf = 16384
-;iroundness = 100
-iroundness = isizehalf * 0.05
-
-kslope = (isizehalf - iroundness) * (1-kpar_2) * 0.99
-islope = i(kslope)
-itfun ftgentmp 0, 123, isizehalf * 2, 7, -1, isizehalf - islope - iroundness, -1, iroundness, -0.95, islope, 0, islope, 0.95, iroundness, 1, isizehalf - islope - iroundness, 1
-
-ainn AtanLimit ain * kpar1 * 2
-asquared tab (ainn + 1) * isizehalf, itfun
-rireturn
-
-;check for update slowly
-ktrig  metro 10
-kch changed kpar_2
-kchng init 0
-if kchng == 0 && kch == 1 then
-    kchng = 1
-endif
-; reinit the transfer function
-if kchng == 1 && ktrig == 1 then
-    reinit reset
-    kchng = 0
-endif
-
-aenva butlp asquared, 30 + kpar3 * kpar3 * 20000
-
-aoutb balance aenva, ain
-aout = aoutb * kpar4 * kpar4 * 8
+$EFF_SQUARER
 $OUTMIXT
 endin
-
-
 
 
 instr 108; slow attack
 $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
-
-klogic init 0
-ktime init 2
-krms rms ain * 1.42
-
-ktratt trigger krms, kpar1, 0
-;attack
-if ktratt == 1 && changed(ktratt) == 1 then
-    klogic = 1
-    ktime = 2
-endif
-ktrrel trigger krms, 0.001, 1
-;release
-if ktrrel == 1 && changed(ktrrel) == 1 then
-    klogic = 0
-    ktime = 0.001
-endif
-kattenv portk klogic, kpar2 * ktime
-aout = kattenv * ain
+$EFF_SLOW_ATTACK
 $OUTMIXT
 endin
-
 
 
 instr 109;Oeyvind Brandtsegg Compressor
@@ -2426,13 +2358,9 @@ $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-kingain = kpar1 * kpar1 * 4
-kthresh = -150 + kpar2 * 150
-kratio = 1 + kpar3 * 30
-aout BrandtseggComp ain, kingain, kthresh, kratio
+$EFF_BRANDTSEGGCOMP
 $OUTMIXT
 endin
-
 
 
 instr 110;lowpass
@@ -2440,22 +2368,18 @@ $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-aout_ lowpass2 ain, 5 + kpar1 * kpar1 * 5000, 1 + 300 * kpar2 * kpar2
-aout = aout_ * kpar3
+$EFF_LOWPASS
 $OUTMIXT
 endin
-
 
 
 instr 111;highpass
 $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
-aout_ buthp ain, 5 + kpar1 * kpar1 * 8000
-aout = aout_ * kpar2
+$EFF_HIGHPASS
 $OUTMIXT
 endin
-
 
 
 instr 112;env lp
@@ -2464,14 +2388,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-kenv rms ain * kpar1  * 5
-kfm= kpar2 * kpar2 * 10000
-kfM= kpar3 * kpar3 * 10000
-kfr = kfm + (kfM - kfm) * kenv
-aout lowpass2 ain, kfr, 1 + 500 * kpar4
+$EFF_ENVLOWPASS
 $OUTMIXT
 endin
-
 
 
 instr 113; lpf18
@@ -2480,16 +2399,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-;kpar1 - frequency
-;kpar2 - resonance
-;kpar3 - distortion
-;kpar4 - dry - wet
-ares lpf18 ain, kpar1 * kpar1 * 10000, kpar2 * 1.1, kpar3
-abal balance ares, ain
-aout CosSinMix ain, abal, kpar4
+$EFF_LPF18
 $OUTMIXT
 endin
-
 
 
 instr 114;parametric
@@ -2497,32 +2409,17 @@ $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-kcf = kpar1 * kpar1 * 10000
-aout eqfil ain, kcf, kcf  * 0.5 * kpar2, kpar3 * kpar3 * 10
+$EFF_PARAMETRIC
 $OUTMIXT
 endin
-
 
 
 instr 115;condor cab sym
 $INMIXT
 $PARAMTP(1'giport);scoop
-;low
-alowhp buthp ain, 90 + 30 * kpar1
-alowlp butlp alowhp, 90 + 30 * kpar1
-;mid
-amidhp buthp ain, 90 + 30 * kpar1
-amidlp butlp ain, 3000 + 1000 * kpar1
-ascooplow butlp ain, 400 - 200 * kpar1
-ascoophigh buthp ain, 400 + 200 * kpar1
-;high
-ahighp buthp, ain, 3000 + 1000 * kpar1
-ahiglp butlp ahighp, 3000 + 1000 * kpar1
-;mix
-aout = alowlp * ampdbfs(-4 - 2  * kpar1) + ahiglp + (ascooplow + ascoophigh) * ampdbfs(-8 - 2   * kpar1)
+$EFF_CONDORCAB
 $OUTMIXT
 endin
-
 
 
 instr 116;wha
@@ -2531,13 +2428,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-;freq range of pedal 450- 1k6 circa, gain 18 db
-afil butbp ain, 400 + kpar1 * (1700 - 400), (0.01 + kpar3) * (400 + kpar1 * (1700 - 400))
-afilg = afil * ampdbfs(kpar2 * 20)
-aout balance afilg + ain * kpar4, ain
+$EFF_WHA
 $OUTMIXT
 endin
-
 
 
 instr 117;vocal filter
@@ -2545,71 +2438,9 @@ $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-
-kindex = round(kpar1 * 4.3)
-kport = kpar2 * 2
-if1 ftgentmp 0, 123, 5, -2, 650, 400, 290, 400, 350
-kf1_ tab kindex, if1
-if2 ftgentmp 0, 123, 5, -2, 1080, 1700, 1870, 800, 600
-kf2_ tab kindex, if2
-if3 ftgentmp 0, 123, 5, -2, 2650, 2600, 2800, 2600, 2700
-kf3_ tab kindex, if3
-if4 ftgentmp 0, 123, 5, -2, 2900, 3200, 3250, 2800, 2900
-kf4_ tab kindex, if4
-if5 ftgentmp 0, 123, 5, -2, 3250, 3580, 3540, 3000, 3300
-kf5_ tab kindex, if5
-kf1 portk kf1_, kport
-kf2 portk kf2_, kport
-kf3 portk kf3_, kport
-kf4 portk kf4_, kport
-kf5 portk kf5_, kport
-
-ib1 ftgentmp 0, 123, 5, -2, 80, 70, 40, 70, 40
-kb1_ tab kindex, ib1
-ib2 ftgentmp 0, 123, 5, -2, 90, 80, 90, 80, 60
-kb2_ tab kindex, ib2
-ib3 ftgentmp 0, 123, 5, -2, 120, 100, 100, 100, 100
-kb3_ tab kindex, ib3
-ib4 ftgentmp 0, 123, 5, -2, 130, 120, 120, 130, 120
-kb4_ tab kindex, ib4
-ib5 ftgentmp 0, 123, 5, -2, 140, 120, 120, 135, 120
-kb5_ tab kindex, ib5
-kb1 portk kb1_, kport
-kb2 portk kb2_, kport
-kb3 portk kb3_, kport
-kb4 portk kb4_, kport
-kb5 portk kb5_, kport
-
-ig1 ftgentmp 0, 123, 5, -2, 0, 0, 0, 0, 0
-kg1_ tab kindex, ig1
-ig2 ftgentmp 0, 123, 5, -2, -6, -14, -15, -10, -20
-kg2_ tab kindex, ig2
-ig3 ftgentmp 0, 123, 5, -2, -7, -12, -18, -12, -17
-kg3_ tab kindex, ig3
-ig4 ftgentmp 0, 123, 5, -2, -8, -14, -20, -12, -14
-kg4_ tab kindex, ig4
-ig5 ftgentmp 0, 123, 5, -2, -22, -20, -30, -26, -26
-kg5_ tab kindex, ig5
-kg1 portk kg1_, kport
-kg2 portk kg2_, kport
-kg3 portk kg3_, kport
-kg4 portk kg4_, kport
-kg5 portk kg5_, kport
-
-af1 butbp ain, kf1, kb1
-af2 butbp ain, kf2, kb2
-af3 butbp ain, kf3, kb3
-af4 butbp ain, kf4, kb4
-af5 butbp ain, kf5, kb5
-
-aout_ = af1 * ampdbfs(kg1) + af2 * ampdbfs(kg2) + af3 * ampdbfs(kg3) + af4 * ampdbfs(kg4) + af5 * ampdbfs(kg5)
-aoutb balance aout_, ain
-
-aout CosSinMix ain, aoutb, kpar3
+$EFF_VOCALFILTER
 $OUTMIXT
 endin
-
-
 
 
 instr 119;4 bands guitar eq 20 db
@@ -2618,19 +2449,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-klow init 200
-kmid1 init 300
-kmid2 init 3000
-alow butlp ain, klow
-amid1_ buthp ain, klow
-amid1 butlp amid1_, kmid1
-amid2_ buthp ain, kmid1
-amid2 butlp amid2_, kmid2
-ahig buthp ain, kmid2
-aout = alow * kpar1 * kpar1 * 10 + amid1 * kpar2 * kpar2 * 10 + amid2 * kpar3 * kpar3 * 10 + ahig * kpar4 * kpar4 * 10
+$EFF_4BGEQ
 $OUTMIXT
 endin
-
 
 
 instr 120;tremolo
@@ -2639,17 +2460,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-
-ifno ftgentmp 0, 123, 16384, 10, 1
-iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
-ftmorf kpar3  * 2, iftfn, ifno
-amod oscil 0.5, kpar1 * 30, ifno
-ares = (amod + 0.5) * kpar2 * 3 * ain
-
-aout CosSinMix ain, ares, kpar4
+$EFF_TREMOLO
 $OUTMIXT
 endin
-
 
 
 instr 121;flanger
@@ -2658,13 +2471,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-adel oscil 0.499, kpar1, giSine
-adel = adel + 0.5
-ares flanger ain, adel * 0.02 * kpar2, kpar3 * 0.99
-aout CosSinMix ain, ares, kpar4
+$EFF_FLANGER
 $OUTMIXT
 endin
-
 
 
 instr 122; phaser
@@ -2673,18 +2482,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-;kpar1 - lfo
-;kpar2 - frequency
-;kpar3 - feedback
-;kpar4 - dry - wet
-iord init 128; 1 - 4999
-kmod oscili 0.499, kpar1 * kpar1 * 20, giSine
-kmod = kmod + 0.5
-ares phaser1 ain, 40 + kpar2 * kpar2 * 10000 * kmod, iord, kpar3
-aout CosSinMix ain, ares, kpar4
+$EFF_PHASER
 $OUTMIXT
 endin
-
 
 
 instr 123;chorus
@@ -2693,28 +2493,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-kdelay = kpar1 * 0.03 + 0.001
-kfreq = kpar2 * 5
-
-iminT = 0.004
-achorus1 oscili 0.5, kfreq, giSine, 0 
-achorus1 = ((achorus1 + 0.5) * kdelay) 
-achorus2 oscili 0.5, kfreq, giSine, 0.33333
-achorus2 = ((achorus2 + 0.5) * kdelay)
-achorus3 oscili 0.5, kfreq, giSine, 0.66666
-achorus3 = ((achorus3 + 0.5) * kdelay)
-
-adell delayr 0.035
-achor1 deltap3 achorus1 + iminT
-achor2 deltap3 achorus2 + iminT
-achor3 deltap3 achorus3 + iminT
-adetlaps = (achor1 + achor2 + achor3)
-	delayw ain +  adetlaps * kpar3 * 0.3
-
-aout CosSinMix ain, adetlaps, kpar4
+$EFF_CHORUS
 $OUTMIXT
 endin
-
 
 
 instr 124;leslie based on Ian McCurdy Leslie.csd
@@ -2723,74 +2504,30 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-
-ares = ain
-kcrossover = 20+ kpar1 * kpar1 * 8000
-kfreqL = kpar2 * kpar2 * 160
-kfreqH = kpar3 * kpar3 * 160
-kDopDep= kpar4 * 2
-iMaxDelay = 4
-
-alow butlp ain, kcrossover
-ahig buthp ain, kcrossover
-
-;Low Horn
-aAmpL 	oscili 0.5,  kfreqL, giSine
-aAmpL	= aAmpL + 0.5
-aPanL	oscili 0.5, kfreqL, giSine, 0.75
-aPanL	= aPanL + 0.5
-aDelTimL oscili	kDopDep, kfreqL, giSine, 0
-aDelTimL = aDelTimL + kDopDep
-aDelTapL vdelay alow * aAmpL, aDelTimL, iMaxDelay
-aLL, aLR pan2  aDelTapL, aPanL, 1
-
-;High Horn
-aAmpH oscili 0.5,  kfreqH, giSine
-aAmpH	= aAmpH + 0.5
-aPanH	oscili 0.5, kfreqH, giSine, 0.75
-aPanH	= aPanH + 0.5
-aDelTimH oscili	 kDopDep, kfreqH, giSine, 0
-aDelTimH = aDelTimH + kDopDep
-aDelTapH vdelay ahig * aAmpH, aDelTimH, iMaxDelay
-aHL, aHR pan2  aDelTapH, aPanH, 1
-
-aout = aLL + aLR + aHL + aHR
+$EFF_LESLIE
 $OUTMIXT
 endin
 
 
-instr 125;pitch shift
+instr 125;pitch shifter
 $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-ktransp = (kpar1 - 0.5) * 48; transpose +- 24
-ares PitchShifter_akk ain, ktransp, kpar2, gihalfsine
-aout CosSinMix ain, ares, kpar3
+$EFF_PITCHSHIFTER
 $OUTMIXT
 endin
 
 
-
-instr 126;pitch shift spectral
+instr 126;pitch shifter spectral
 $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-ksemitones = round((kpar1 - 0.5) * 48)
-ktransp = semitone(ksemitones); transpose +- 24
-ksign =(ktransp < 0 ? -1 : 1)
-kfine = semitone(kpar2) * ksign
-
-fftin     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
-fftblur   pvscale fftin, ktransp * kfine
-ares      pvsynth fftblur	
-
-aout CosSinMix ain, ares, kpar3
+$EFF_PITCHSHIFTERSPECTRAL
 $OUTMIXT
 endin
-
 
 
 instr 127;ringmod
@@ -2798,17 +2535,9 @@ $INMIXT
 $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-
-ifno ftgentmp 0, 0, 16384, 10, 1
-iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
-ftmorf kpar2  * 2, iftfn, ifno
-
-asine oscil 1, kpar1 * kpar1 * 10000, ifno
-aout CosSinMix ain, ain * asine, kpar3
+$EFF_RINGMODULATOR
 $OUTMIXT
 endin
-
-
 
 
 instr 128;FMer
@@ -2817,18 +2546,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-
-kqual init 0.01
-kpit = (kpar1 - 0.5) * 48; carrier transpose +- 24
-ktransp = (kpar2 - 0.5) * 48; modulator transpose +- 24
-kspread = (kpar3 - 0.5) * 48; modulator spread +- 24
-amod PitchShifter_akk ain, ktransp, kqual, gihalfsine
-afm PitchShifter_aak ain, kpit + amod * kspread, kqual, gihalfsine
-aout CosSinMix ain, afm, kpar4
+$EFF_FMER
 $OUTMIXT
 endin
-
-
 
 
 instr 129;hilbert
@@ -2841,35 +2561,7 @@ $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 ;direction
 $PARAMTNP(4)
-
-aoscil oscili 0.5, kpar1 * kpar1 * kpar1 * 100, giSine
-koscil downsamp aoscil + 0.5
-kminShift = 20 + kpar2 * kpar2 * 10000
-kmaxShift = 20 + kpar3 * kpar3 * 10000
-kfreq = kminShift + koscil * (kmaxShift - kminShift)
-asin oscili 1, kfreq, giSine
-acos oscili 1, kfreq, giSine, .25
-
-;Phase quadrature output derived from input signal.
-areal, aimag hilbert ain
-;Based on trignometric identities.
-amod1 = areal * acos
-amod2 = aimag * asin
-; Calculate the up-shift and down-shift.
-aupshift = (amod1 + amod2) * 0.7
-adownshift = (amod1 - amod2) * 0.7
-; Make sure the output doesn't get louder than the original signal.
-aout1 balance aupshift, ain
-aout2 balance adownshift, ain
-
-if kpar_4 >= 0 &&  kpar_4 < 0.3 then;upshift only
-    aout = aout1 * 2
-elseif kpar_4 >= 0.3 &&  kpar_4 < 0.4 then;downshift only
-    aout = aout2 * 2
-else
-    aout = aout1 + aout2
-endif
-
+$EFF_HILBERT
 $OUTMIXT
 endin
 
@@ -2879,15 +2571,9 @@ $INMIXT
 $PARAMTP(1'giport*2)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-abuf	delayr	1.1
-adel 	deltap	kpar1
-	delayw	ain + adel * kpar2
-aout CosSinMix ain, adel, kpar3
+$EFF_DELAY
 $OUTMIXT
 endin
-
-
-
 
 
 instr 132;reverse delay
@@ -2896,37 +2582,9 @@ $INMIXT
 $PARAMTP(1'giport*2)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-
-ienv1	ftgenonce 0, 0, 131072, 7, 0, 1024, 1, 131072-(1024*2), 1, 1024, 0
-ienv2	ftgenonce 0, 0, 131072, 7, 0, 4096, 1, 131072-(4096*2), 1, 4096, 0 	
-ienv3	ftgenonce 0, 0, 131072, 7, 0,16384, 1, 131072-(16384*2), 1, 16384, 0 
-ienv4	ftgenonce 0, 0, 131072, 7, 0,32768, 1, 131072-(32768*2), 1, 32768, 0
-
-ktime_ = kpar1 * 4
-ktime limit ktime_, 0.01, 4
-atime	interp	ktime
-aptr phasor (2/ktime) ;CREATE A MOVING PHASOR THAT WITH BE USED TO 
-
-if ktime < 0.2 then ;IF CHUNK TIME IS LESS THAN 0.2... (VERY SHORT)
-    aenv	table3	aptr,ienv4,1 ;CREATE AMPLITUDE ENVELOPE 	
-elseif ktime < 0.4 then 	 
-    aenv	table3	aptr,ienv3,1
-elseif ktime < 2 then 	 
-    aenv	table3	aptr,ienv2,1
-else ;other longest bracket of delay times
-     aenv	table3	aptr,ienv1,1 	
-endif 	
-aptr = aptr * atime ;SCALE PHASOR ACCORDING TO THE LENGTH OF THE DELAY TIME CHOSEN BY THE USER 	
-
-abuffer	delayr 4.01 ;CREATE A DELAY BUFFER 	
-    abwd	deltap3	aptr ;READ AUDIO FROM A TAP WITHIN THE DELAY BUFFER
-    afwd	deltap3	atime ;FORWARD DELAY 		
-delayw	ain + afwd * kpar2
-
-aout CosSinMix ain, abwd, kpar3
+$EFF_DELAYREVERSE
 $OUTMIXT
 endin
-
 
 
 instr 133;crapdelay
@@ -2935,22 +2593,9 @@ $PARAMTP(1'giport*2)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-
-awobble_ oscil kpar2 * .003, 1 / (4 * kpar1), giSine
-awobble = 1 + awobble_
-
-abuf delayr 8
-adeltap deltapi 4 * kpar1 * awobble
-ahp buthp adeltap, 20 + 500 * kpar2
-alp butlp ahp, 20000 - 15000 * kpar2
-anoise noise 0.001 * kpar2, 0.2
-afeed AtanLimit alp  + anoise
-delayw	ain + afeed * kpar3 * (1.2 + kpar2);compensation
-
-aout CosSinMix ain, afeed, kpar4
+$EFF_DELAYCRAP
 $OUTMIXT
 endin
-
 
 
 instr 140; reverb
@@ -2959,14 +2604,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-denorm ain
-ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
-aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
-aout CosSinMix ain, aoutL + aoutR, kpar4
+$EFF_REVERB
 $OUTMIXT
 endin
-
-
 
 
 instr 141;modulated_verb
@@ -2975,68 +2615,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-
-ilp1  init 1/10
-ilp2  init 1/23
-ilp3  init 1/41
-
-denorm ain
-ajunk    alpass  ain, 1.7, 0.1
-aleft    alpass  ajunk, 1.01, .07
-
-ajunk    alpass  ain, 1.5, 0.2
-aright   alpass  ajunk, 1.33, .05
-
-reset:
-imod = i(kpar1)
-kdel1_ randi 0.01 * kpar1, 0.05 + 3 * imod, 0.666
-kdel2_ randi 0.01 * kpar1, 0.047 + 2.9 * imod, 0.777
-rireturn
-
-; reinit 
-if changed(kpar1) == 1 then
-    reinit reset
-endif
-
-
-kdel1 portk kdel1_, 1 / (0.05 + 3 * kpar1)
-kdel1    =       kdel1 + 0.01
-addl1    delayr  .3
-afeed1   deltapi kdel1
-    delayw afeed1 * kpar1 + aleft
-
-kdel2 portk kdel2_, 1 / (0.047 + 3 * kpar1)
-kdel2    =       kdel2 + 0.01
-addl2    delayr  .3
-afeed2   deltapi kdel2
-    delayw afeed2 * kpar2 + aright
-
-;post reverb
-aglobin AtanLimit (afeed1 + afeed2) * (0.5 - 0.30 * kpar1)
-atap1 comb aglobin, 3.3, ilp1
-atap2 comb aglobin, 3.3, ilp2
-atap3 comb aglobin, 3.3, ilp3
-aglobrev alpass atap1 + atap2 + atap3, 2.6, .085
-aglobrev_ tone aglobrev, 30 + kpar3 * kpar3 * 24000
-aglobrev buthp aglobrev_, 90 - 40 * kpar1
-
-kdel3 randi .003, 0.2, .888
-kdel3 = kdel3 + .05
-addl3 delayr .2
-agr1 deltapi kdel3
-    delayw aglobrev + agr1 * 0.5 * kpar1
-
-kdel4 randi .0033, 0.27, .999
-kdel4 = kdel4 + .05
-addl4 delayr .2
-agr2 deltapi kdel4
-    delayw aglobrev + agr2 * 0.5 * kpar1
-
-aout CosSinMix ain, (agr1 + afeed1+ agr2 + afeed2) / 4, kpar4
+$EFF_REVERBMODULATED
 $OUTMIXT
 endin
-
-
 
 
 instr 142;shroeder verb
@@ -3049,38 +2630,7 @@ $PARAMTP(3'giport)
 ;postime
 $PARAMTP(4'giport)
 ;d-w
-
-denorm ain
-; four parallel comb filters
-;kRvt reverb time
-kRvt = kpar1 * 3
-imaxlpt1 init 0.0297
-imaxlpt2 init 0.0371
-imaxlpt3 init 0.0411
-imaxlpt4 init 0.0437
-;A
-a1L vcomb ain, kRvt, imaxlpt1 * kpar2, imaxlpt1 * 3 
-a2L vcomb ain, kRvt, imaxlpt2 * kpar2, imaxlpt2 * 3 
-a3L vcomb ain, kRvt, imaxlpt3 * kpar2, imaxlpt3 * 3 
-a4L vcomb ain, kRvt, imaxlpt4 * kpar2, imaxlpt4 * 3 
-asumL sum a1L, a2L, a3L, a4L
-;B
-a1R vcomb ain, kRvt, imaxlpt1 * kpar2 * .97, imaxlpt1 * 3 
-a2R vcomb ain, kRvt, imaxlpt2 * kpar2 * .96, imaxlpt2 * 3 
-a3R vcomb ain, kRvt, imaxlpt3 * kpar2 * .95, imaxlpt3 * 3
-a4R vcomb ain, kRvt, imaxlpt4 * kpar2 * .94, imaxlpt4 * 3 
-asumR sum a1R, a2R, a3R, a4R
-
-; two allpass filters in series
-imaxlpt5 init 0.005
-;A
-a5L valpass asumL + asumR * 0.1, 0.1, imaxlpt5 * kpar3, imaxlpt5 * 3
-aOutL alpass a5L, 0.1, 0.02295
-;B
-a5R valpass asumR + asumL * 0.1, 0.1, imaxlpt5 * kpar3, imaxlpt5 * 3
-aOutR alpass a5R, 0.1, 0.02287
-
-aout CosSinMix ain, (aOutL + aOutR) / 1.41, kpar4
+$EFF_REVERBSHROEDER
 $OUTMIXT
 endin
 
@@ -3092,24 +2642,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-denorm ain
-ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
-aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
-
-;dry-wet balance based on the input signal envelope
-atrk follow2 ain, 0.05, 0.05
-ktrk downsamp atrk
-kmix_ init 0
-if ktrk < kpar4 then 
-    kmix_ = 1
-else
-    kmix_ = (ktrk - kpar4) / (1 - kpar4)
-endif
-kmix port kmix_, 0.1
-aout CosSinMix ain, aoutL + aoutR, kmix
+$EFF_REVERBENV
 $OUTMIXT
 endin
-
 
 
 instr 150;spectral arpeggiator
@@ -3118,35 +2653,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-kfrr = kpar1 * kpar1 * 30
-kl = kpar2 * kpar2
-kh = kpar3 * kpar3
-
-fftin     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
-
-ifno ftgentmp 0, 0, gifftsize, 7, 0, gifftsize, 1
-kbin init 0
-kbin_ oscil 1, kfrr, ifno
-
-if kpar2 < kpar3 then
-    kbin = kl + kbin_ * (kh - kl)
-else
-    kbin = kl - kbin_ * (kl - kh)
-endif
-
-kdepth init 1
-kgain init 10
-farp pvsarp fftin, kbin, kdepth, kgain
-arpeg      pvsynth farp	
-
-;enveloping
-ifnoenv ftgentmp 0, 0, gifftsize, 7, 0, gifftsize/2, 1, gifftsize/2, 0
-aenv oscil kpar4, kfrr, ifnoenv
-aenv = 1- aenv
-aout = arpeg * aenv
+$EFF_SPECTRALARP
 $OUTMIXT
 endin
-
 
 
 instr 151; frequency shifter
@@ -3157,13 +2666,7 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 ;dry-wet
 $PARAMTP(3'giport)
-
-kshift_ = (kpar1 - 0.5) * 2
-kshift = kshift_ * kshift_ * 500;-500 + 500 exponential
-fftin pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
-fftblur pvshift fftin, kshift, 20
-ares pvsynth fftblur
-aout CosSinMix ain, ares * kpar2 * kpar2 * kpar2 * 8, kpar3
+$EFF_FREQUENCYSHIFT
 $OUTMIXT
 endin 
 
@@ -3176,24 +2679,9 @@ $PARAMTP(1'giport*2)
 $PARAMTP(2'giport*2)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-;kpar1 - granule time
-;kpar2 - delay ratio
-;kpar3 - delay feedback
-;kpar4 - D-W
-itl = ftlen(gigrainenv)
-aphas phasor 1 / (0.010 + kpar1 * 0.040)
-amod tablei aphas * itl, gigrainenv
-awin = ain * amod
-;delay
-abuf	delayr	1
-adel 	deltap3	(0.010 + kpar1 * 0.040) * kpar2
-	delayw	awin + adel * kpar3
-
-aout CosSinMix ain, awin + adel, kpar4
+$EFF_PSEUDOGRAIN
 $OUTMIXT
 endin
-
-
 
 
 instr 153; resonator
@@ -3206,16 +2694,9 @@ $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 ;dry-wet
 $PARAMTP(4'giport)
-
-kfrq = 20 + kpar1 * kpar1 * 2000
-kcutoff = 40 + kpar2 * kpar2 * 15000
-kfeed = 1 - ((1 - kpar3) * (1- kpar3))
-aout wguide1 ain, kfrq, kcutoff, kfeed
-aout CosSinMix ain, aout, kpar4
+$EFF_RESONATOR
 $OUTMIXT
 endin 
-
-
 
 
 instr 155; harmonizer
@@ -3223,81 +2704,9 @@ $INMIXT
 $PARAMTNP(1)
 $PARAMTNP(2)
 $PARAMTNP(3)
-
-;tonality
-ktonality = int(kpar_1 * 11.1)
-
-;interval                                   t  2  3  4, 5  6  7
-iintevals ftgentmp 0, 0, 8, -2, 0, 2, 4, 5, 7, 9, 11;semitones to major
-kinterval_m tab int(kpar_2 * 6.1), iintevals
-
-;octave
-koctave init 1
-if kpar_3 < 0.25 then
-    koctave = 0.25
-elseif kpar_3 >= 0.25 && kpar_3 < 0.5 then
-    koctave = 0.5
-elseif kpar_3 >= 0.5 && kpar_3 < 0.75 then
-    koctave = 1
-else
-    koctave = 2
-endif
-
-iscala ftgentmp 0, 0, 16, -2, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1
-
-;lowest f = sr / ifftsize
-fain  pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
-kfr_tracked, kamp pvspitch fain, 0.01
-
-;input Frequency to midi note number
-knote = 69 + 12 * log2(kfr_tracked / 440)
-knote limit knote, 0, 127
-knote init 0
-knote_r = round(knote) % 12;find the note
-knote_r init 0
-
-kst_diff = (knote_r - ktonality) % 12;different semitones
-if kst_diff < 0 then
-    kst_diff = kst_diff + 12
-endif
-
-;check for input note
-wronginnote:
-krightinnote tab kst_diff, iscala
-if krightinnote == 1 kgoto rigthinnote
-if krightinnote == 0 then
-    kst_diff =(kst_diff + 1) % 12
-    kgoto wronginnote
-endif
-rigthinnote:
-
-;check for harmonized note
-kinterval = kinterval_m
-wronghanote:
-kharmnote = (kst_diff + kinterval) % 12
-krighthanote tab kharmnote, iscala
-if krighthanote == 1 kgoto rigthhanote
-if krighthanote == 0 then
-    if kinterval_m == 5 then
-        kinterval = kinterval + 1
-    else
-        kinterval = kinterval - 1
-    endif
-    kgoto wronghanote
-endif
-rigthhanote:
-
-;shift and synth
-ksemitdiff port kinterval, 0.02
-ikeepform init 0
-kgainsh init 1
-kcoefs init 100
-fsig pvscale fain, semitone(ksemitdiff) * koctave, ikeepform, kgainsh, kcoefs
-fsigs pvsmooth fsig, 0.9, 0.9
-aout pvsynth fsigs
+$EFF_HARMONIZER
 $OUTMIXT
 endin
-
 
 
 instr 160;tremoloBpm
@@ -3306,22 +2715,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-
-istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
-kstep tab round(kpar1 * 4), istep
-ktime port kstep * (1 + kpar2) * 60 / gkbpm, giport
-
-ifno ftgentmp 0, 123, 16384, 10, 1
-iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
-ftmorf kpar3  * 2, iftfn, ifno
-amod oscil 0.5, 1/ktime, ifno
-ares = (amod + 0.5) * 2 * ain
-
-aout CosSinMix ain, ares, kpar4
+$EFF_TREMOLOBPM
 $OUTMIXT
 endin
-
-
 
 
 instr 161;delayBpm
@@ -3330,20 +2726,9 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport*2)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
-
-istep ftgentmp 0, 0, 4, -2, 0.25, 1/3, 0.5, 1
-kstep tab round(kpar1 * 4), istep
-ktime port kstep * (1 + kpar2) * 60 / gkbpm, giport
-
-abuf	delayr	5
-adel 	deltap	ktime
-	delayw	ain + adel * kpar3
-
-aout CosSinMix ain, adel, kpar4
+$EFF_DELAYBPM
 $OUTMIXT
 endin
-
-
 
 
 instr 170;gate
@@ -3351,96 +2736,20 @@ $INMIXT
 $PARAMTNP(1)
 $PARAMTNP(2)
 $PARAMTP(3'giport)
-
-reset:
-ihalftab = 16384
-knull = 0.0001 + kpar_1 * kpar_1 * 0.999
-inull = i(knull)
-;gating function 
-ifuncth ftgentmp 0, 123, ihalftab * 2, 6, 1, ihalftab - ihalftab * inull, 0,  ihalftab * inull, 0, ihalftab * inull, 0, ihalftab - ihalftab * inull, 1
-
-isteep = 0.99
-ifunctl ftgentmp 0, 123, ihalftab * 2, 6, 0, ihalftab - (ihalftab * inull) * isteep, 0, (ihalftab * inull) * (1 - isteep), 1, ihalftab * inull, 1, ihalftab * inull, 1,  (ihalftab * inull) * (1 - isteep), 0, ihalftab - (ihalftab * inull) * isteep, 0
-
-aouth tab (ain + 1) * ihalftab, ifuncth
-aoutl tab (ain + 1) * ihalftab, ifunctl
-rireturn
-
-;check for update slowly
-ktrig  metro 10
-kch changed kpar_1
-kchng init 0
-if kchng == 0 && kch == 1 then
-    kchng = 1
-endif
-
-; reinit the transfer function
-if kchng == 1 && ktrig == 1 then
-    reinit reset
-    kchng = 0
-endif
-
-;mixing variants
-aout = 0
-if kpar_2 > 0.5 then
-    kouth_ downsamp aouth
-    kouth portk kouth_, 0.001 + 0.15 * kpar3
-    aout = kouth * ain
-else
-    koutl_ downsamp aoutl
-    koutl portk koutl_, 0.001 + 0.15 * kpar3
-    aout = koutl * ain
-endif
-
+$EFF_GATE
 $OUTMIXT
 endin
 
 
-
-instr 171;trapez envelope
-;[71, "shortEnv", "threshold", "attack", "sustain", "release"],
+instr 171;shortEnv
 $INMIXT
 $PARAMTNP(1)
 $PARAMTNP(2)
 $PARAMTNP(3)
 $PARAMTNP(4)
-atrk follow2 ain, 0.05, 0.05
-ktrk downsamp atrk
-
-kpar_2 init 0
-kpar_3 init 0
-kpar_4 init 0
-katt = kpar_2 * 0.25
-ksus = kpar_3
-krel = kpar_4
-
-reset:
-iatt = i(katt)
-isus = i(ksus)
-irel = i(krel)
-kenv expseg 0.0001, iatt, 1.0001, isus, 1.0001, irel, 0.0001
-rireturn
-
-klogic init 0
-
-ktratt trigger ktrk, kpar_1, 0
-;attack
-if ktratt == 1 && changed(ktratt) == 1 && klogic == 0 then
-    klogic = 1
-    reinit reset
-endif
-
-ktrrel trigger ktrk, kpar_1, 1
-;release
-if ktrrel == 1 && changed(ktrrel) == 1 && klogic == 1 then
-    klogic = 0
-endif
-
-aout = ain * (kenv - 0.0001)
+$EFF_SHORTENV
 $OUTMIXT
 endin
-
-
 
 
 instr 172; autofreeze
@@ -3451,39 +2760,7 @@ $PARAMTNP(1)
 $PARAMTNP(2)
 ;modul
 $PARAMTP(3'giport)
-
-fanal pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
-
-reset:
-kslope =0.01 + kpar_2 * 3
-islope = i(kslope)
-kenv linseg 0, islope, 1, 0.01, 1
-rireturn
-
-kfreeza init 0
-knext init 0
-k_t_rms_ max_k ain, 1, 1
-k_t_rms port k_t_rms_, 0.1
-ktrig trigger k_t_rms, kpar_1 * kpar_1, 0
-if knext == 1 then
-    kfreeza = 1
-    knext = 0
-    reinit reset
-endif
-if ktrig == 1 then
-    kfreeza = 0
-    knext = 1
-endif
-
-kscal jspline 0.0594 * 0.5 * kpar3, 0.1, 0.1 + 3 * kpar3
-
-fsig pvsfreeze fanal, kfreeza, kfreeza
-fmodu pvscale fsig, 1 - kscal
-fmodd pvscale fsig, 1 +  kscal
-aoutu pvsynth fmodu
-aoutd pvsynth fmodd
-aout = (aoutu + aoutd) * kenv / 1.41
-
+$EFF_AUTOFREEZE
 $OUTMIXT
 endin
 
@@ -3783,7 +3060,7 @@ gartot = gaoutMix[1] * kmix_in  + gaoutMix[3] * kmix_ma + gaoutMix[5] * kmix_l1 
 outs galtot, gartot 
 
 ;Update vumeter
-kupdate metro 2
+kupdate metro 1 / 0.7
 kmatrixoutv max_k gaoutMix[2] + gaoutMix[3], kupdate, 1
 kfreeze1outv max_k gaoutMix[12] * 1.41421, kupdate, 1
 kfreeze2outv max_k gaoutMix[12] * 1.41421, kupdate, 1

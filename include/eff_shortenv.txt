@@ -1,0 +1,35 @@
+#define EFF_SHORTENV#
+atrk follow2 ain, 0.05, 0.05
+ktrk downsamp atrk
+
+kpar_2 init 0
+kpar_3 init 0
+kpar_4 init 0
+katt = kpar_2 * 0.25
+ksus = kpar_3
+krel = kpar_4
+
+reset:
+iatt = i(katt)
+isus = i(ksus)
+irel = i(krel)
+kenv expseg 0.0001, iatt, 1.0001, isus, 1.0001, irel, 0.0001
+rireturn
+
+klogic init 0
+
+ktratt trigger ktrk, kpar_1, 0
+;attack
+if ktratt == 1 && changed(ktratt) == 1 && klogic == 0 then
+    klogic = 1
+    reinit reset
+endif
+
+ktrrel trigger ktrk, kpar_1, 1
+;release
+if ktrrel == 1 && changed(ktrrel) == 1 && klogic == 1 then
+    klogic = 0
+endif
+
+aout = ain * (kenv - 0.0001)
+#

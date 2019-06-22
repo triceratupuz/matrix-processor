@@ -1,0 +1,4 @@
+#define EFF_PARAMETRIC#
+kcf = kpar1 * kpar1 * 10000
+aout eqfil ain, kcf, kcf  * 0.5 * kpar2, kpar3 * kpar3 * 10
+#

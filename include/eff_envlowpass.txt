@@ -1,0 +1,7 @@
+#define EFF_ENVLOWPASS#
+kenv rms ain * kpar1  * 5
+kfm= kpar2 * kpar2 * 10000
+kfM= kpar3 * kpar3 * 10000
+kfr = kfm + (kfM - kfm) * kenv
+aout lowpass2 ain, kfr, 1 + 500 * kpar4
+#

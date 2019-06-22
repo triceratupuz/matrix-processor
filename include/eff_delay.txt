@@ -1,0 +1,6 @@
+#define EFF_DELAY#
+abuf	delayr	1.1
+adel 	deltap	kpar1
+	delayw	ain + adel * kpar2
+aout CosSinMix ain, adel, kpar3
+#

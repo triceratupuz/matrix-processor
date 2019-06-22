@@ -1,0 +1,31 @@
+#define EFF_DELAYREVERSE#
+;taken from Ian Mc Curdy reverse.csd
+ienv1	ftgenonce 0, 0, 131072, 7, 0, 1024, 1, 131072-(1024*2), 1, 1024, 0
+ienv2	ftgenonce 0, 0, 131072, 7, 0, 4096, 1, 131072-(4096*2), 1, 4096, 0 	
+ienv3	ftgenonce 0, 0, 131072, 7, 0,16384, 1, 131072-(16384*2), 1, 16384, 0 
+ienv4	ftgenonce 0, 0, 131072, 7, 0,32768, 1, 131072-(32768*2), 1, 32768, 0
+
+ktime_ = kpar1 * 4
+ktime limit ktime_, 0.01, 4
+atime	interp	ktime
+aptr phasor (2/ktime) ;CREATE A MOVING PHASOR THAT WITH BE USED TO 
+
+if ktime < 0.2 then ;IF CHUNK TIME IS LESS THAN 0.2... (VERY SHORT)
+    aenv	table3	aptr,ienv4,1 ;CREATE AMPLITUDE ENVELOPE 	
+elseif ktime < 0.4 then 	 
+    aenv	table3	aptr,ienv3,1
+elseif ktime < 2 then 	 
+    aenv	table3	aptr,ienv2,1
+else ;other longest bracket of delay times
+     aenv	table3	aptr,ienv1,1 	
+endif 	
+aptr = aptr * atime ;SCALE PHASOR ACCORDING TO THE LENGTH OF THE DELAY TIME CHOSEN BY THE USER 	
+
+abuffer	delayr 4.01 ;CREATE A DELAY BUFFER 	
+    abwd	deltap3	aptr ;READ AUDIO FROM A TAP WITHIN THE DELAY BUFFER
+    afwd	deltap3	atime ;FORWARD DELAY 		
+delayw	ain + afwd * kpar2
+
+aout CosSinMix ain, abwd, kpar3
+
+#

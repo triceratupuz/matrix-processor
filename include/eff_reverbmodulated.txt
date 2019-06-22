@@ -1,0 +1,60 @@
+#define EFF_REVERBMODULATED#
+
+ilp1  init 1/10
+ilp2  init 1/23
+ilp3  init 1/41
+
+denorm ain
+ajunk    alpass  ain, 1.7, 0.1
+aleft    alpass  ajunk, 1.01, .07
+
+ajunk    alpass  ain, 1.5, 0.2
+aright   alpass  ajunk, 1.33, .05
+
+reset:
+imod = i(kpar1)
+kdel1_ randi 0.01 * kpar1, 0.05 + 3 * imod, 0.666
+kdel2_ randi 0.01 * kpar1, 0.047 + 2.9 * imod, 0.777
+rireturn
+
+; reinit 
+if changed(kpar1) == 1 then
+    reinit reset
+endif
+
+
+kdel1 portk kdel1_, 1 / (0.05 + 3 * kpar1)
+kdel1    =       kdel1 + 0.01
+addl1    delayr  .3
+afeed1   deltapi kdel1
+    delayw afeed1 * kpar1 + aleft
+
+kdel2 portk kdel2_, 1 / (0.047 + 3 * kpar1)
+kdel2    =       kdel2 + 0.01
+addl2    delayr  .3
+afeed2   deltapi kdel2
+    delayw afeed2 * kpar2 + aright
+
+;post reverb
+aglobin AtanLimit (afeed1 + afeed2) * (0.5 - 0.30 * kpar1)
+atap1 comb aglobin, 3.3, ilp1
+atap2 comb aglobin, 3.3, ilp2
+atap3 comb aglobin, 3.3, ilp3
+aglobrev alpass atap1 + atap2 + atap3, 2.6, .085
+aglobrev_ tone aglobrev, 30 + kpar3 * kpar3 * 24000
+aglobrev buthp aglobrev_, 90 - 40 * kpar1
+
+kdel3 randi .003, 0.2, .888
+kdel3 = kdel3 + .05
+addl3 delayr .2
+agr1 deltapi kdel3
+    delayw aglobrev + agr1 * 0.5 * kpar1
+
+kdel4 randi .0033, 0.27, .999
+kdel4 = kdel4 + .05
+addl4 delayr .2
+agr2 deltapi kdel4
+    delayw aglobrev + agr2 * 0.5 * kpar1
+
+aout CosSinMix ain, (agr1 + afeed1+ agr2 + afeed2) / 4, kpar4
+#

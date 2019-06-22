@@ -1,0 +1,11 @@
+#define EFF_PHASER#
+;kpar1 - lfo
+;kpar2 - frequency
+;kpar3 - feedback
+;kpar4 - dry - wet
+iord init 128; 1 - 4999
+kmod oscili 0.499, kpar1 * kpar1 * 20, giSine
+kmod = kmod + 0.5
+ares phaser1 ain, 40 + kpar2 * kpar2 * 10000 * kmod, iord, kpar3
+aout CosSinMix ain, ares, kpar4
+#

@@ -1,0 +1,17 @@
+#define EFF_REVERBENV#
+denorm ain
+ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
+aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
+
+;dry-wet balance based on the input signal envelope
+atrk follow2 ain, 0.05, 0.05
+ktrk downsamp atrk
+kmix_ init 0
+if ktrk < kpar4 then 
+    kmix_ = 1
+else
+    kmix_ = (ktrk - kpar4) / (1 - kpar4)
+endif
+kmix port kmix_, 0.1
+aout CosSinMix ain, aoutL + aoutR, kmix
+#

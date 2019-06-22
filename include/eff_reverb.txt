@@ -1,0 +1,6 @@
+#define EFF_REVERB#
+denorm ain
+ainhp buthp ain, 20 + 10000 * kpar1 * kpar1
+aoutL, aoutR reverbsc ainhp, ainhp, kpar2, kpar3 * 15000
+aout CosSinMix ain, aoutL + aoutR, kpar4
+#

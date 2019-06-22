@@ -1,0 +1,4 @@
+#define EFF_LOWPASS#
+aout_ lowpass2 ain, 5 + kpar1 * kpar1 * 5000, 1 + 300 * kpar2 * kpar2
+aout = aout_ * kpar3
+#

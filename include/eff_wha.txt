@@ -1,0 +1,6 @@
+#define EFF_WHA#
+;freq range of pedal 450- 1k6 circa, gain 18 db
+afil butbp ain, 400 + kpar1 * (1700 - 400), (0.01 + kpar3) * (400 + kpar1 * (1700 - 400))
+afilg = afil * ampdbfs(kpar2 * 20)
+aout balance afilg + ain * kpar4, ain
+#

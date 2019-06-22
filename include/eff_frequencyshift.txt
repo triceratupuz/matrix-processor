@@ -1,0 +1,9 @@
+#define EFF_FREQUENCYSHIFT#
+
+kshift_ = (kpar1 - 0.5) * 2
+kshift = kshift_ * kshift_ * 500;-500 + 500 exponential
+fftin pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
+fftblur pvshift fftin, kshift, 20
+ares pvsynth fftblur
+aout CosSinMix ain, ares * kpar2 * kpar2 * kpar2 * 8, kpar3
+#

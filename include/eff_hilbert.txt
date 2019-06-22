@@ -1,0 +1,30 @@
+#define EFF_HILBERT#
+
+aoscil oscili 0.5, kpar1 * kpar1 * kpar1 * 100, giSine
+koscil downsamp aoscil + 0.5
+kminShift = 20 + kpar2 * kpar2 * 10000
+kmaxShift = 20 + kpar3 * kpar3 * 10000
+kfreq = kminShift + koscil * (kmaxShift - kminShift)
+asin oscili 1, kfreq, giSine
+acos oscili 1, kfreq, giSine, .25
+
+;Phase quadrature output derived from input signal.
+areal, aimag hilbert ain
+;Based on trignometric identities.
+amod1 = areal * acos
+amod2 = aimag * asin
+; Calculate the up-shift and down-shift.
+aupshift = (amod1 + amod2) * 0.7
+adownshift = (amod1 - amod2) * 0.7
+; Make sure the output doesn't get louder than the original signal.
+aout1 balance aupshift, ain
+aout2 balance adownshift, ain
+
+if kpar_4 >= 0 &&  kpar_4 < 0.3 then;upshift only
+    aout = aout1 * 2
+elseif kpar_4 >= 0.3 &&  kpar_4 < 0.4 then;downshift only
+    aout = aout2 * 2
+else
+    aout = aout1 + aout2
+endif
+#

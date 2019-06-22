@@ -1,0 +1,21 @@
+#define EFF_CHORUS#
+kdelay = kpar1 * 0.03 + 0.001
+kfreq = kpar2 * 5
+
+iminT = 0.004
+achorus1 oscili 0.5, kfreq, giSine, 0 
+achorus1 = ((achorus1 + 0.5) * kdelay) 
+achorus2 oscili 0.5, kfreq, giSine, 0.33333
+achorus2 = ((achorus2 + 0.5) * kdelay)
+achorus3 oscili 0.5, kfreq, giSine, 0.66666
+achorus3 = ((achorus3 + 0.5) * kdelay)
+
+adell delayr 0.035
+achor1 deltap3 achorus1 + iminT
+achor2 deltap3 achorus2 + iminT
+achor3 deltap3 achorus3 + iminT
+adetlaps = (achor1 + achor2 + achor3)
+	delayw ain +  adetlaps * kpar3 * 0.3
+
+aout CosSinMix ain, adetlaps, kpar4
+#

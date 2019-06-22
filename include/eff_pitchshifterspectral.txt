@@ -1,0 +1,12 @@
+#define EFF_PITCHSHIFTERSPECTRAL#
+ksemitones = round((kpar1 - 0.5) * 48)
+ktransp = semitone(ksemitones); transpose +- 24
+ksign =(ktransp < 0 ? -1 : 1)
+kfine = semitone(kpar2) * ksign
+
+fftin     pvsanal ain, gifftsize, gioverlap, giwinsize, giwinshape
+fftblur   pvscale fftin, ktransp * kfine
+ares      pvsynth fftblur	
+
+aout CosSinMix ain, ares, kpar3
+#

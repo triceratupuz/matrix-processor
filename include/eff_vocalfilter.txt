@@ -1,0 +1,63 @@
+#define EFF_VOCALFILTER#
+
+kindex = round(kpar1 * 4.3)
+kport = kpar2 * 2
+if1 ftgentmp 0, 123, 5, -2, 650, 400, 290, 400, 350
+kf1_ tab kindex, if1
+if2 ftgentmp 0, 123, 5, -2, 1080, 1700, 1870, 800, 600
+kf2_ tab kindex, if2
+if3 ftgentmp 0, 123, 5, -2, 2650, 2600, 2800, 2600, 2700
+kf3_ tab kindex, if3
+if4 ftgentmp 0, 123, 5, -2, 2900, 3200, 3250, 2800, 2900
+kf4_ tab kindex, if4
+if5 ftgentmp 0, 123, 5, -2, 3250, 3580, 3540, 3000, 3300
+kf5_ tab kindex, if5
+kf1 portk kf1_, kport
+kf2 portk kf2_, kport
+kf3 portk kf3_, kport
+kf4 portk kf4_, kport
+kf5 portk kf5_, kport
+
+ib1 ftgentmp 0, 123, 5, -2, 80, 70, 40, 70, 40
+kb1_ tab kindex, ib1
+ib2 ftgentmp 0, 123, 5, -2, 90, 80, 90, 80, 60
+kb2_ tab kindex, ib2
+ib3 ftgentmp 0, 123, 5, -2, 120, 100, 100, 100, 100
+kb3_ tab kindex, ib3
+ib4 ftgentmp 0, 123, 5, -2, 130, 120, 120, 130, 120
+kb4_ tab kindex, ib4
+ib5 ftgentmp 0, 123, 5, -2, 140, 120, 120, 135, 120
+kb5_ tab kindex, ib5
+kb1 portk kb1_, kport
+kb2 portk kb2_, kport
+kb3 portk kb3_, kport
+kb4 portk kb4_, kport
+kb5 portk kb5_, kport
+
+ig1 ftgentmp 0, 123, 5, -2, 0, 0, 0, 0, 0
+kg1_ tab kindex, ig1
+ig2 ftgentmp 0, 123, 5, -2, -6, -14, -15, -10, -20
+kg2_ tab kindex, ig2
+ig3 ftgentmp 0, 123, 5, -2, -7, -12, -18, -12, -17
+kg3_ tab kindex, ig3
+ig4 ftgentmp 0, 123, 5, -2, -8, -14, -20, -12, -14
+kg4_ tab kindex, ig4
+ig5 ftgentmp 0, 123, 5, -2, -22, -20, -30, -26, -26
+kg5_ tab kindex, ig5
+kg1 portk kg1_, kport
+kg2 portk kg2_, kport
+kg3 portk kg3_, kport
+kg4 portk kg4_, kport
+kg5 portk kg5_, kport
+
+af1 butbp ain, kf1, kb1
+af2 butbp ain, kf2, kb2
+af3 butbp ain, kf3, kb3
+af4 butbp ain, kf4, kb4
+af5 butbp ain, kf5, kb5
+
+aout_ = af1 * ampdbfs(kg1) + af2 * ampdbfs(kg2) + af3 * ampdbfs(kg3) + af4 * ampdbfs(kg4) + af5 * ampdbfs(kg5)
+aoutb balance aout_, ain
+
+aout CosSinMix ain, aoutb, kpar3
+#

@@ -1,0 +1,34 @@
+#define EFF_LESLIE#
+;leslie based on Ian McCurdy Leslie.csd
+ares = ain
+kcrossover = 20+ kpar1 * kpar1 * 8000
+kfreqL = kpar2 * kpar2 * 160
+kfreqH = kpar3 * kpar3 * 160
+kDopDep= kpar4 * 2
+iMaxDelay = 4
+
+alow butlp ain, kcrossover
+ahig buthp ain, kcrossover
+
+;Low Horn
+aAmpL 	oscili 0.5,  kfreqL, giSine
+aAmpL	= aAmpL + 0.5
+aPanL	oscili 0.5, kfreqL, giSine, 0.75
+aPanL	= aPanL + 0.5
+aDelTimL oscili	kDopDep, kfreqL, giSine, 0
+aDelTimL = aDelTimL + kDopDep
+aDelTapL vdelay alow * aAmpL, aDelTimL, iMaxDelay
+aLL, aLR pan2  aDelTapL, aPanL, 1
+
+;High Horn
+aAmpH oscili 0.5,  kfreqH, giSine
+aAmpH	= aAmpH + 0.5
+aPanH	oscili 0.5, kfreqH, giSine, 0.75
+aPanH	= aPanH + 0.5
+aDelTimH oscili	 kDopDep, kfreqH, giSine, 0
+aDelTimH = aDelTimH + kDopDep
+aDelTapH vdelay ahig * aAmpH, aDelTimH, iMaxDelay
+aHL, aHR pan2  aDelTapH, aPanH, 1
+
+aout = aLL + aLR + aHL + aHR
+#

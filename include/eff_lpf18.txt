@@ -1,0 +1,9 @@
+#define EFF_LPF18#
+;kpar1 - frequency
+;kpar2 - resonance
+;kpar3 - distortion
+;kpar4 - dry - wet
+ares lpf18 ain, kpar1 * kpar1 * 10000, kpar2 * 1.1, kpar3
+abal balance ares, ain
+aout CosSinMix ain, abal, kpar4
+#
