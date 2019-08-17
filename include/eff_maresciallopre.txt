@@ -1,0 +1,55 @@
+#define EFF_MARESCIALLOPRE#
+;https://hal.univ-cotedazur.fr/hal-01589229/document
+;guitar high e = 329.63 * 2 * 2
+
+;valve transfer function
+;ivt ftgentmp 0, 123, 1024, 7, -0.45, 290, -0.45, 512 - 290, 0, 512, 1
+ivt ftgentmp 0, 123, 1024, 8, -0.47, 260, -0.43, 70, -0.38, 60, -0.31, 122, 0, 512, 1
+
+;kpar1 = gain
+kgain = kpar1 * kpar1 * 20
+imode_ls init 1
+
+;v1b - input stage 
+av1b butlp ain, 4500; to limit foldover introduced by distortion
+
+;we have a low shelf filter with a -3.3dB gain at 720Hz
+als1 pareq ain, 720, 0.6839, sqrt(0.47), imode_ls
+
+;then another low shelf at -6dB 320Hz, 
+als2 pareq als1, 320, 0.5011, sqrt(0.47), imode_ls
+
+;v1a is mainly a gain
+;av1a = als * kgain
+;av1a_ AtanLimit als2
+
+als2 butlp als2, 5000; to limit foldover introduced by distortion
+als2 AtanLimit als2 * 2
+
+av1a_ TransferFun als2, ivt
+av1a = av1a_ * kgain
+
+;followed by a high pass filter at 6-7Hz
+ahp buthp av1a, 7
+als3 pareq ahp, 720, 0.5011, sqrt(0.47), imode_ls
+als3 AtanLimit als3 * 2
+
+;v2a amplifies and introduces harmonics
+als3 butlp als3, 6000; to limit foldover introduced by distortion
+
+av2 TransferFun als3, ivt
+av2 butlp av2, 9000
+av2 AtanLimit av2
+
+;EQ
+;https://robrobinette.com/How_The_TMB_Tone_Stack_Works.htm
+alow buthp av2, 8 + (314 -8) * (1 - kpar2)
+amid buthp av2, 314 + 15000 * (1 - kpar3)
+ahig  buthp av2, 2313 + (2548 - 2313) * (1 - kpar4)
+amidbass butlp amid + alow, 2500
+aout_ = amidbass * (1 - kpar4) + ahig * kpar4
+
+aout_ AtanLimit aout_
+aout dcblock2 aout_
+
+#

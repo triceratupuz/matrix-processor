@@ -8,5 +8,5 @@ amid1 butlp amid1_, kmid1
 amid2_ buthp ain, kmid1
 amid2 butlp amid2_, kmid2
 ahig buthp ain, kmid2
-aout = alow * kpar1 * kpar1 * 10 + amid1 * kpar2 * kpar2 * 10 + amid2 * kpar3 * kpar3 * 10 + ahig * kpar4 * kpar4 * 10
+aout = alow * kpar1 * kpar1 * kpar1 * 10 + amid1 * kpar2 * kpar2 * kpar2 * 10 + amid2 * kpar3 * kpar3 * kpar3 * 10 + ahig * kpar4 * kpar4 * kpar4 * 10
 #

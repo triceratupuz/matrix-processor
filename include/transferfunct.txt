@@ -1,0 +1,11 @@
+
+
+opcode TransferFun, a, ai
+ain, ifn xin
+ifnlhalf = int(ftlen(ifn) * 0.5)
+print ifnlhalf
+aout table3 ifnlhalf + ain * ifnlhalf, ifn
+xout aout
+endop
+
+

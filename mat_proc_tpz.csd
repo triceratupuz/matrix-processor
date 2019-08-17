@@ -234,11 +234,12 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [5, "degrader", "fold", "bits", "dry-wet", ""],
     [6, "powershape", "shape", "hp", "lp", "volume"],
     [7, "squarer", "pre", "slope", "lowpass", "volume"],
+    [80, "maresciallo", "gain", "bass", "mid", "treble"],
     [8, "slow attack", "threshold", "time", "", ""],
     [9, "compressor", "gain", "threshold", "ratio", ""],
     [70, "gate", "threshold", "lop-hip", "react", ""],
     [71, "shortEnv", "threshold", "attack", "sustain", "release"],
-    [72, "autofreeze", "threshold", "risetime", "modulation", ""],
+    [72, "autofreeze", "threshold", "risetime", "modulation", "trig dly"],
     [10, "lowpass", "freq", "Q", "volume", ""],
     [11, "highpass", "freq", "volume", "", ""],
     [12, "evelopLp", "sens", "freq L", "freq H", "Q"],
@@ -1726,6 +1727,7 @@ gScurDir init "$GSCURDIR"
 #include "DelaySampl.txt"
 #include "PitchShifter_aak.txt"
 #include "PitchShifter_akk.txt"
+#include "transferfunct.txt"
 #include "looper.txt"
 
 ;MACROS see options
@@ -1756,6 +1758,7 @@ gScurDir init "$GSCURDIR"
 #include "eff_leslie.txt"
 #include "eff_lowpass.txt"
 #include "eff_lpf18.txt"
+#include "eff_maresciallopre.txt"
 #include "eff_mix.txt"
 #include "eff_parametric.txt"
 #include "eff_phaser.txt"
@@ -2760,11 +2763,22 @@ $PARAMTNP(1)
 $PARAMTNP(2)
 ;modul
 $PARAMTP(3'giport)
+;trig delay
+$PARAMTNP(4)
 $EFF_AUTOFREEZE
 $OUTMIXT
 endin
 
 
+instr 180;maresciallopre
+$INMIXT
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
+$EFF_MARESCIALLOPRE
+$OUTMIXT
+endin
 
 
 instr 1000;output

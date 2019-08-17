@@ -25,7 +25,9 @@ endif
 
 kscal jspline 0.0594 * 0.5 * kpar3, 0.1, 0.1 + 3 * kpar3
 
-fsig pvsfreeze fanal, kfreeza, kfreeza
+kfreeza_ vdel_k kfreeza, kpar_4 * 0.1, 0.12
+
+fsig pvsfreeze fanal, kfreeza_, kfreeza_
 fmodu pvscale fsig, 1 - kscal
 fmodd pvscale fsig, 1 +  kscal
 aoutu pvsynth fmodu
