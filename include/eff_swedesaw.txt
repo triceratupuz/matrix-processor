@@ -1,0 +1,24 @@
+#define EFF_SWEDESAW#
+
+;https://electricdruid.net/digitech-pds-1550-distortion-pedal-analysis/
+kb_amp = ampdbfs( -20 + 40 * kpar2)
+kmh_amp = ampdbfs(  -20 + 40 * kpar3)
+
+ivc ftgentmp 0, 123, 1024, 7, -1, 512, 0, 512, 1
+ivd ftgentmp 0, 123, 1024, 8, -0.7, 512 - 40, -0.6, 40, 0, 70, 1, 512 - 70, 1
+ire ftgentmp 0, 123, 1024, 10, 1
+iftfn ftgentmp 0, 123, 2, -2, ivc, ivd
+
+ftmorf kpar1, iftfn, ire
+adist TransferFun ain, ire
+
+aeqin butlp adist, 9000
+
+abass pareq aeqin, 87, kb_amp, 3.7
+amid pareq abass, 958, kmh_amp, 3.4
+ahigh pareq amid, 1278, kmh_amp, 3.7
+aout_ AtanLimit ahigh
+
+aout dcblock2 aout_
+
+#

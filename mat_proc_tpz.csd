@@ -208,6 +208,9 @@ input[type=button].footdh {
                font-size:2.2em;
 }
 
+input[type=button].ttpc {
+               width:32%;
+}
 
 
 #pad {
@@ -235,6 +238,7 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [6, "powershape", "shape", "hp", "lp", "volume"],
     [7, "squarer", "pre", "slope", "lowpass", "volume"],
     [80, "maresciallo", "gain", "bass", "mid", "treble"],
+    [81, "swedesaw", "dist", "bass", "treble", ""],
     [8, "slow attack", "threshold", "time", "", ""],
     [9, "compressor", "gain", "threshold", "ratio", ""],
     [70, "gate", "threshold", "lop-hip", "react", ""],
@@ -674,6 +678,17 @@ function delayLimit(id, value, idmode) {
   }
     csoundApp.setControlChannel(id, 1.0 * time);
    //csoundApp.setControlChannel(id, valin);
+}
+
+
+
+function delayTimeCopy(dest, source) {
+/*copy delay time from other delay*/
+	var destCh = "ol_ti" + dest.toString();
+	var sourceCh = "ol_ti" + source.toString();
+	var valu = csoundApp.getControlChannel(sourceCh);
+	csoundApp.setControlChannel(destCh, valu);
+	document.getElementById(destCh).value = valu.toString();
 }
 
 
@@ -1585,6 +1600,14 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('                                      <option value="1">beat</option>');
     document.write('</select><br>');
     document.write('<input type="number" class="foot" min=0 max=60 value=1.000 step=0.001 id="ol_ti' + lop + '" onchange="delayLimit(id, value' + ", 'outtimeum" + lop + "')"+ '">');
+
+    //Time Copy buttons
+    for (var con = 1; con <= 4; con++){
+        if (con != lop) {
+            document.write('<input type="button" class="ttpc" value="T=' + con + '" id="ol_ticop' + con + '_' + lop + '" onclick="delayTimeCopy(' + lop + ', '  + con + ')">');
+        }
+    }
+
     document.write('<select class= "foot" id="speedloop'+lop+'" onchange="selectDo(id)">');
     document.write('                                      <option value="0.25">1/4</option>');
     document.write('                                      <option value="0.3333333333">1/3</option>');
@@ -1776,6 +1799,7 @@ gScurDir init "$GSCURDIR"
 #include "eff_slow_attack.txt"
 #include "eff_spectralarp.txt"
 #include "eff_squarer.txt"
+#include "eff_swedesaw.txt"
 #include "eff_tremolo.txt"
 #include "eff_tremolobpm.txt"
 #include "eff_vocalfilter.txt"
@@ -2779,6 +2803,17 @@ $PARAMTP(4'giport)
 $EFF_MARESCIALLOPRE
 $OUTMIXT
 endin
+
+
+instr 181;swedesaw distortion
+$INMIXT
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$EFF_SWEDESAW
+$OUTMIXT
+endin
+
 
 
 instr 1000;output
