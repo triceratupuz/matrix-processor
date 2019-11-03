@@ -1,0 +1,39 @@
+#define EFF_NIPPLEDIST#
+
+;nipple distortion - positive wave nipple, negative wave clipped
+;kpar1 distortion vs linear - PARAMTP(1'giport)
+;kpar2 cross 0 steepness PARAMTNP(2)
+;kpar3 areola H PARAMTNP(3)
+;kpar4 areola W PARAMTNP(4)
+
+reset:
+kcrostee = 20 + round(80 * kpar_2)
+icrostee = i(kcrostee)
+kareolaH = 0.7 * kpar_3
+iareolaH = i(kareolaH)
+kareolaW = 20 + round(380 * kpar_4)
+iareolaW = i(kareolaW)
+
+ivc ftgentmp 0, 123, 1024, 7, -1, 512, 0, 512, 1
+ivd ftgentmp 0, 123, 1024, 7, -0.55, 512 - icrostee, -0.45, icrostee, 0, icrostee, iareolaH * 0.7, iareolaW, iareolaH, 512 - icrostee - iareolaW, 1
+ire ftgentmp 0, 123, 1024, 10, 1;result of ftmorph
+iftfn ftgentmp 0, 123, 2, -2, ivc, ivd;tables for morphing
+rireturn
+
+ktrig changed kpar_2, kpar_3, kpar_4
+if ktrig == 1 then
+	reinit reset
+endif
+
+ain butlp ain, 5000
+ain buthp ain, 70
+
+ftmorf kpar1, iftfn, ire
+adist TransferFun ain, ire
+aout_ AtanLimit adist
+
+aout_ butlp aout_, 7500
+
+aout dcblock2 aout_
+
+#

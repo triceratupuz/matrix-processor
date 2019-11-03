@@ -239,6 +239,7 @@ var effectsData = [[0, "nothing", "", "", "", ""],
     [7, "squarer", "pre", "slope", "lowpass", "volume"],
     [80, "maresciallo", "gain", "bass", "mid", "treble"],
     [81, "swedesaw", "dist", "bass", "treble", ""],
+    [82, "nippledist", "dist", "zero steep", "areola h", "areola w"],
     [8, "slow attack", "threshold", "time", "", ""],
     [9, "compressor", "gain", "threshold", "ratio", ""],
     [70, "gate", "threshold", "lop-hip", "react", ""],
@@ -1783,6 +1784,7 @@ gScurDir init "$GSCURDIR"
 #include "eff_lpf18.txt"
 #include "eff_maresciallopre.txt"
 #include "eff_mix.txt"
+#include "eff_nippledist.txt"
 #include "eff_parametric.txt"
 #include "eff_phaser.txt"
 #include "eff_pitchshifter.txt"
@@ -2811,6 +2813,17 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $EFF_SWEDESAW
+$OUTMIXT
+endin
+
+
+instr 182;nippledistortion
+$INMIXT
+$PARAMTP(1'giport)
+$PARAMTNP(2)
+$PARAMTNP(3)
+$PARAMTNP(4)
+$EFF_NIPPLEDIST
 $OUTMIXT
 endin
 
