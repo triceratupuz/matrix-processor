@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Matrix Processor Manual</h1>
+
+<p>This is a multieffect processor created for Csound For Android.<br>
+The GUI is made with Html and Javascript. Midi messages are received through web midi api in the GUI code.</p>
+<br>
+Developed by <a href="http://triceratupuz.altervista.org/" target="_blank">Triceratupuz Lab</a><br>
+
+<h2 id="index">Index</h2>
+<ul>
+<li><a href="#beforeusing">Before using</a></li>
+<li><a href="#header">Header</a></li>
+<li><a href="#matrix">Matrix Page</a></li>
+<li><a href="#midi">Midi Page</a></li>
+<li><a href="#trackpad">Trackpad page</a></li>
+<li><a href="#looper">Looper Page</a></li>
+</ul>
+
+<h3 id="beforeusing">Before Using</h3>
+<ul>
+<li>The files and directories must be placed (preserving folder structures) in a directory
+where user has access and files manipulation permissions.</li> 
+<li>Change the --omacro:GSCURDIR=/absolute/path/to/file/mat_proc_tpz/dot/csd/ in CsOptions</li>
+<li>Change the --env:INCRIR+=/absolute/path/to/include/directory in CsOptions</li>
+</ul>
+<a href="#index">Back to index</a>
+
+<h3 id="header">Header</h3>
+<img src="img/header.jpg" style="width:50%;height:50%;border:0;"><br>
+This piece is always fixed on top.
+<ul>
+<li>Top left number and BpM button allows to set the global BpM.
+Button can be used as tap tempo, number flashes at tempo.</li>
+<li>Bottom left number set the tail time when changing presets, 
+Tails shows how many presets are running (in case of longer tail times).</li>
+<li>Drop down menu allow to select mixing (just audio manipulation) and recording
+(the audio is recorded in a wav file in the same directory of the csd file).</li>
+<li>Left numbered buttons (0-9) are to select bank number (each bank has 10 matrix presets).</li>
+<li>Left numbered buttons (0-9) are to select presets number.</li>
+<li>Save button save the current matrix preset in the bank/preset selected.</li>
+<li>Load button load the matrix preset selected.</li>
+<li>matrix, midi, tpad and looper buttons change visible page.</li>
+</ul>
+<a href="#index">Back to index</a>
+
+<h3 id="matrix">Matrix Page</h3>
+<img src="img/matrix.jpg" style="width:50%;height:50%;border:0;"><br>
+In this page effects are selected, setted and connected. Each column represents a channel (effect).
+<ul>
+<li>in slider is the volume from mic/line in/dac</li>
+<li>1 to 8 sliders are the volume of the 8 channels in the matrix to be used as input of this effect/column</li>
+<li>Dropdown menu allow to select the effect used in this column</li>
+<li>depending on the effect selected the 4 horizontal sliders chenge the name to the corresponding parameter 
+(or nothing if not used in the particular effect)</li>
+<li>pan slider place the output of the effect in the stereo field</li>
+<li>m vertical slider is how much volume of the effect output will be used in the matrix (with the 1-8 channel sliders)</li>
+<li>o vertical slider is the output volume of the effect</li>
+</ul>
+<a href="#index">Back to index</a>
+
+<h3 id="midi">Midi Page</h3>
+<img src="img/midi.jpg" style="width:50%;height:50%;border:0;"><br>
+8 matrix parameters can be controlled by midi Control Changes.
+<ul>
+<li>Dropdown menu is to select which matrix parameter must be controlled</li>
+<li>CC is the control change number that should be used</li>
+<li>min is the value of the parameter (in range 0.0-1.0) when CC value is 0</li>
+<li>max is the value of the parameter (in range 0.0-1.0) when CC value is 127</li>
+</ul>
+The rest of the page has:
+<ul>
+<li>list of midi controls (program chenges and Control chenges) hardcoded in the program</li>
+<li>a midi monitor that displays incoming midi messages</li>
+</ul>
+<a href="#index">Back to index</a>
+<h3 id="trackpad">Trackpad page</h3>
+<img src="img/trackpad.jpg" style="width:50%;height:50%;border:0;"><br>
+4 matrix parameters can be controlled by moving a finger on the trackpad.
+<ul>
+<li>top dropdown select the parameter to be controlled</li>
+<li>other dropdown select the pad axis to be mapped as control</li>
+<li>min is the value of the parameter (in range 0.0-1.0) when finger is in the axis min area</li> 
+<li>max is the value of the parameter (in range 0.0-1.0) when finger is in the axis max area</li>
+</ul>
+<a href="#index">Back to index</a>
+
+<h3 id="looper">Looper Page</h3>
+<img src="img/loopers.jpg" style="width:50%;height:50%;border:0;"><br>
+In this page there are 4 loopers, 3 freezers and the output mixer<br>
+<h4>Loopers</h4>
+<ul>
+<li>looper can be: OFF (completely deactivated), man (can record play using the Play/rec button), 
+autoend (started with Play/rec button and stops recoding/loop after the time selected), 
+thrStart (start recording when audio volume cross the threshold set with Thr vertical slider), 
+thrStertautoend (start recording when audio volume cross the threshold set with Thr vertical slider</li>
+and stops recoding/loop after the time selected)</li>
+<li>P0 button bring loop reproduction at the beginning</li>
+<li>Kill button cancel the portion of the loop as long as it is pressed</li>
+<li>from matrix dropdown menu is to lect the source to be recorder for the loop</li>
+<li>sec/beat dropdown menu select the unit of measure for the loop duration 
+(seconds or beats relative to BpM set in the Header)</li>
+<li>T= buttons is to copy the duration of loop from the other loopers</li>
+<li>1 dropdown menu select the speed of the loop</li>
+<li>the horizontal slider is another way to change the speed of the loop>
+<li>to 1 button reset the slider to change de speed</li>
+<li>fPitch button preserve the original pitch regardless the speed changes in the loop</li>
+<li>reduce/amplify dropdown control if the rep slider is used to decrease or increase the loop volume at each repeat</li>
+<li>In slider is to set the volume for the input of the loop. 
+If using the Play/Rec button or the autotheshold function this slider is set internally to max (=1). 
+It can be used if looper is used as delay in man mode with lenght already selected.</li>
+<li>off/sin/tri/squ dropdown, pos/bi/neg dropdown, Amp(litude) slider, Fre(quency) slider and Off(set) slider can be 
+used to modulate loop speed/pitch.</li>
+<li>to matrix silder send the output of the looper to the input of the matrix</li>  
+</ul>
+
+<h4>Freez(ers)</h4>
+<ul>
+<li>dropdounmenu select the source signal to be freezed</li>
+<li>Rise Time set the fade in/fade out time for the freezed sounds</li>
+<li>to matrix silder send the output of the looper to the input of the matrix</li> 
+</ul>
+<h4>Mixer</h4>
+Mix the volume of the various parts.
+<br><br>
+<a href="#index">Back to index</a>
+</body>
+</html>
