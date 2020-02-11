@@ -1,0 +1,12 @@
+#define EFF_HARMTREM#
+;harmonic tremolo
+;kpar1 speed
+;kpar2 frequency
+kfreq = 10 + 20000 * kpar2 * kpar2
+ahi buthp ain, kfreq
+alo butlp ain, kfreq
+klfo lfo 0.5, kpar1 * kpar1 * 30, 0
+;aou = alo * (0.5 + klfo) + ahi * (1 - (0.5 + klfo))
+aou CosSinMix ahi, alo, klfo
+aout CosSinMix ain, aou, kpar3
+#

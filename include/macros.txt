@@ -84,6 +84,16 @@ kpar_$N tab kparind_$N, 5+p5
 #
 
 
+#define PARAMVOUT(N'VAR) #
+ichannel = p4
+iparam = $N
+Schannel$N sprintf "spc%dp%dreceive", ichannel, iparam
+if changed($VAR) == 1 then
+    chnset $VAR, Schannel$N
+endif
+#
+
+
 #define OUTLINET(N) #
 ;matrix feedback
 indmatv$N init 17 * ($N -1) + 15

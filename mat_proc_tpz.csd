@@ -229,56 +229,59 @@ input[type=button].ttpc {
 //create efflist e para
 // first number is csound instr - 100
 
-var effectsData = [[0, "nothing", "", "", "", ""],
-    [1, "mix", "gain", "phase inv", "", ""],
-    [2, "distort", "pre", "post", "shape 1", "shape 2"],
-    [3, "clip", "pre", "vol", "", ""],
-    [4, "abs", "abs", "direct", "", ""],
-    [5, "degrader", "fold", "bits", "dry-wet", ""],
-    [6, "powershape", "shape", "hp", "lp", "volume"],
-    [7, "squarer", "pre", "slope", "lowpass", "volume"],
-    [80, "maresciallo", "gain", "bass", "mid", "treble"],
-    [81, "swedesaw", "dist", "bass", "treble", ""],
-    [82, "nippledist", "dist", "zero steep", "areola h", "areola w"],
-    [8, "slow attack", "threshold", "time", "", ""],
-    [9, "compressor", "gain", "threshold", "ratio", ""],
-    [70, "gate", "threshold", "lop-hip", "react", ""],
-    [71, "shortEnv", "threshold", "attack", "sustain", "release"],
-    [72, "autofreeze", "threshold", "risetime", "modulation", "trig dly"],
-    [10, "lowpass", "freq", "Q", "volume", ""],
-    [11, "highpass", "freq", "volume", "", ""],
-    [12, "evelopLp", "sens", "freq L", "freq H", "Q"],
-    [13, "lpf18", "freq", "resonance", "distortion", "dry-wet"],
-    [14, "1b parametric", "freq", "band", "gain", ""],
-    [15, "condorcab", "scoop", "", "", ""],
-    [16, "wah", "pedal", "gain", "bw", "direct"],
-    [17, "vocal filt", "vocal", "portamento", "dry-wet", ""],
-    [19, "4b eq", "bass", "lowmid", "highmid", "high"],
-    [20, "tremolo", "freq", "volume", "square", "dry-wet"],
-    [60, "tremoloBpm", "step", "qty", "square", "dry-wet"],
-    [21, "flanger", "freq", "delay", "feedback", "dry-wet"],
-    [22, "phaser", "lfo", "frequency", "feedback", "dry-wet"],
-    [23, "chorus", "delay", "frequency", "feedback", "dry-wet"],
-    [24, "leslie", "crossover", "L speed", "H speed", "doppler"],
-    [25, "pitch", "pitch", "quality", "dry-wet", ""],
-    [26, "pitch HQ", "pitch", "fine", "dry-wet", ""],
-    [27, "ring mod", "freq", "shape", "dry-wet", ""],
-    [28, "freq mod", "car shift", "mod shift", "spread", "dry-wet"],
-    [29, "hilbert", "freq", "min shift", "max shift", "direction"],
-    [30, "delay", "time", "feedback", "dry-wet", ""],
-    [61, "delayBpm", "step", "qty", "feedback", "dry-wet"],
-    [32, "reverseDelay", "time", "feedback", "dry-wet", ""],
-    [33, "crapDelay", "time", "crap", "feedback", "dry-wet"],
-    [40, "reverb", "hp in", "size", "cutoff", "dry-wet"],
-    [41, "modulverb", "random", "feedback", "cutoff", "dry-wet"],
-    [42, "schroeder", "time", "pretime", "postime", "dry-wet"],
-    [43, "enverb", "hp in", "size", "cutoff", "threshold"],
-    [50, "spectral arp", "speed", "min", "max", "env"],
-    [51, "freq shift", "freq", "gain", "dry-wet", ""],
-    [52, "pseudo grain", "rate", "dlyratio", "feedback", "dry-wet"],
-    [53, "resonator", "frequency", "cutoff", "feedback", "dry-wet"],
-    [55, "harmonizer", "tonality", "interval", "octave", ""]
+var effectsData = [[0, "nothing", ["", 0], ["", 0], ["", 0], ["", 0]],
+    [1, "mix", ["gain", 0], ["phase inv", 0], ["", 0], ["", 0]],
+    [2, "distort", ["pre", 0], ["post", 0], ["shape 1", 0], ["shape 2", 0]],
+    [3, "clip", ["pre", 0], ["vol", 0], ["", 0], ["", 0]],
+    [4, "abs", ["abs", 0], ["direct", 0], ["", 0], ["", 0]],
+    [5, "degrader", ["fold", 0], ["bits", 0], ["dry-wet", 0], ["", 0]],
+    [6, "powershape", ["shape", 0], ["hp", 0], ["lp", 0], ["volume", 0]],
+    [7, "squarer", ["pre", 0], ["slope", 0], ["lowpass", 0], ["volume", 0]],
+    [80, "maresciallo", ["gain", 0], ["bass", 0], ["mid", 0], ["treble", 0]],
+    [81, "swedesaw", ["dist", 0], ["bass", 0], ["treble", 0], ["", 0]],
+    [82, "nippledist", ["dist", 0], ["zero steep", 0], ["areola h", 0], ["areola w", 0]],
+    [83, "green od", ["dist", 0], ["tone", 0], ["", 0], ["", 0]],
+    [8, "slow attack", ["threshold", 0], ["time", 0], ["", 0], ["", 0]],
+    [9, "compressor", ["gain", 0], ["threshold", 0], ["ratio", 0], ["", 0]],
+    [70, "gate", ["threshold", 0], ["lop-hip", 0], ["react", 0], ["", 0]],
+    [71, "shortEnv", ["threshold", 0], ["attack", 0], ["sustain", 0], ["release", 0]],
+    [72, "autofreeze", ["threshold", 0], ["risetime", 0], ["modulation", 0], ["trig dly", 0]],
+    [10, "lowpass", ["freq", 0], ["Q", 0], ["volume", 0], ["", 0]],
+    [11, "highpass", ["freq", 0], ["volume", 0], ["", 0], ["", 0]],
+    [12, "evelopLp", ["sens", 0], ["freq L", 0], ["freq H", 0], ["Q", 0]],
+    [13, "lpf18", ["freq", 0], ["resonance", 0], ["distortion", 0], ["dry-wet", 0]],
+    [14, "1b parametric", ["freq", 0], ["band", 0], ["gain", 0], ["", 0]],
+    [15, "condorcab", ["scoop", 0], ["", 0], ["", 0], ["", 0]],
+    [16, "wah", ["pedal", 0], ["gain", 0], ["bw", 0], ["direct", 0]],
+    [17, "vocal filt", ["vocal", 0], ["portamento", 0], ["dry-wet", 0], ["", 0]],
+    [19, "4b eq", ["bass", 0], ["lowmid", 0], ["highmid", 0], ["high", 0]],
+    [20, "tremolo", ["freq", 0], ["volume", 0], ["square", 0], ["dry-wet", 0]],
+    [60, "tremoloBpm", ["mult", 1], ["square", 0], ["dry-wet", 0], ["", 0]],
+    [56, "harm trem", ["speed", 0], ["freq", 0], ["dry-wet", 0], ["", 0]],
+    [21, "flanger", ["freq", 0], ["delay", 0], ["feedback", 0], ["dry-wet", 0]],
+    [22, "phaser", ["lfo", 0], ["frequency", 0], ["feedback", 0], ["dry-wet", 0]],
+    [23, "chorus", ["delay", 0], ["frequency", 0], ["feedback", 0], ["dry-wet", 0]],
+    [24, "leslie", ["crossover", 0], ["L speed", 0], ["H speed", 0], ["doppler", 0]],
+    [25, "pitch", ["pitch", 1], ["quality", 0], ["dry-wet", 0], ["", 0]],
+    [26, "pitch HQ", ["pitch", 1], ["fine", 0], ["dry-wet", 0], ["", 0]],
+    [27, "ring mod", ["freq", 0], ["shape", 0], ["dry-wet", 0], ["", 0]],
+    [28, "freq mod", ["car shift", 0], ["mod shift", 0], ["spread", 0], ["dry-wet", 0]],
+    [29, "hilbert", ["freq", 0], ["min shift", 0], ["max shift", 0], ["direction", 0]],
+    [30, "delay", ["time", 0], ["feedback", 0], ["dry-wet", 0], ["", 0]],
+    [61, "delayBpm", ["mult", 1], ["feedback", 0], ["dry-wet", 0], ["", 0]],
+    [32, "reverseDelay", ["time", 0], ["feedback", 0], ["dry-wet", 0], ["", 0]],
+    [33, "crapDelay", ["time", 0], ["crap", 0], ["feedback", 0], ["dry-wet", 0]],
+    [40, "reverb", ["hp in", 0], ["size", 0], ["cutoff", 0], ["dry-wet", 0]],
+    [41, "modulverb", ["random", 0], ["feedback", 0], ["cutoff", 0], ["dry-wet", 0]],
+    [42, "schroeder", ["time", 0], ["pretime", 0], ["postime", 0], ["dry-wet", 0]],
+    [43, "enverb", ["hp in", 0], ["size", 0], ["cutoff", 0], ["threshold", 0]],
+    [50, "spectral arp", ["speed", 0], ["min", 0], ["max", 0], ["env", 0]],
+    [51, "freq shift", ["freq", 0], ["gain", 0], ["dry-wet", 0], ["", 0]],
+    [52, "pseudo grain", ["rate", 0], ["dlyratio", 0], ["feedback", 0], ["dry-wet", 0]],
+    [53, "resonator", ["frequency", 0], ["cutoff", 0], ["feedback", 0], ["dry-wet", 0]],
+    [55, "harmonizer", ["tonality", 1], ["interval", 0], ["octave", 0], ["", 0]]
 ];
+
 
 //channels
 var channels = 8;
@@ -362,10 +365,12 @@ function createEffPara(effectsData){
     //create list with effect parameters
     var effPara = [];//create space for 100 effects
     for (var idx = 0; idx < 100; idx++) {
-        effPara.push(["", "", "", ""]);
+        effPara.push(["", "", "", "", 0, 0, 0, 0]);
     }
     for (var idxx = 0; idxx < effectsData.length; idxx++) {
-        effPara[effectsData[idxx][0]] = [effectsData[idxx][2], effectsData[idxx][3], effectsData[idxx][4], effectsData[idxx][5]];
+        effPara[effectsData[idxx][0]] = [effectsData[idxx][2][0], effectsData[idxx][3][0], effectsData[idxx][4][0], effectsData[idxx][5][0],
+		effectsData[idxx][2][1], effectsData[idxx][3][1], effectsData[idxx][4][1], effectsData[idxx][5][1]];
+        //[1] is editable or not, see effectsData
     }
     return effPara;
 }
@@ -611,6 +616,44 @@ function sliderDo(id, value) {
     channel named after the slider id*/
     var numberValue = parseFloat(value);
     csoundApp.setControlChannel(id, numberValue);
+}
+
+
+function sliderDoParam(id, value, div, parnnn) {
+/*to dispatch the value to the software 
+    channel named after the slider id, just for param*/
+    var numberValue = parseFloat(value);
+    csoundApp.setControlChannel(id, numberValue);
+
+	//To verify if param must retrieve and display value from csound
+	//get index of effect type dropdown see effChange()
+	var ideff = "eff_n_".replace("_n_", div.toString());
+
+	var e = document.getElementById(ideff);
+              var strUser = e.options[e.selectedIndex].value;
+
+             var numberValue = parseInt(strUser);
+
+	//verify if the effect parameter must be returned
+	if (para[numberValue][parnnn + 3] > 0){
+		var parname = para[numberValue][parnnn  -1];
+		var spcid = "spc"+ div.toString() + "p" + parnnn.toString();//text with return value
+	    document.getElementById(spcid).textContent  = parname + ": - -";
+
+		//schedule read return channel from csound after 20 ms
+		setTimeout(function(spcid, parname) {
+			sliderDoParamRetieve(spcid, parname);//update with returnd value from csound 
+    	}, 200, spcid, parname)//delay of 200 ms necessary to allow javascript minimum time
+
+	}
+	
+}
+
+function sliderDoParamRetieve(spcid, parname){
+	//update id="spc'+ div + 'p'+ parnnn + '"' text with return value
+	//if parameter must display value
+	var value = csoundApp.getControlChannel(spcid + "receive");
+	document.getElementById(spcid).textContent  = parname + ":" + value.toFixed(2);
 }
 
 
@@ -1286,10 +1329,10 @@ for (div = 1; div <= channels; div++) {
 		var channe = channChanns[item][0].replace("_n_", div.toString());
 		if (channe.indexOf("in") > -1){
 			//vertical slider
-                                          if (vsl == 0) {var vsls = "in";}
-                                          else {var vsls = vsl.toString();}
-			 document.write(vsls + '<input type="range" class="vertical" min=0 max=1 value=0 step=0.001 id="' + channe +'" oninput="sliderDo(id, value)"><br>');
-                                         vsl +=1;
+            if (vsl == 0) {var vsls = "in";}
+            else {var vsls = vsl.toString();}
+			document.write(vsls + '<input type="range" class="vertical" min=0 max=1 value=0 step=0.001 id="' + channe +'" oninput="sliderDo(id, value)"><br>');
+            vsl +=1;
 		} else if (channe.indexOf("eff") > -1){
 			//effect selector
 			document.write('<select id="' + channe +'"onchange="effChange(id)">');
@@ -1299,9 +1342,15 @@ for (div = 1; div <= channels; div++) {
 		    document.write('</select><br>');
 		} else if (channe.indexOf("par") > -1){
 			//effects parameters
+			
+			
 			var parnnn = channe.substr(channe.length -1);//number of parameter
 			document.write('<span id="spc'+ div + 'p'+ parnnn + '"></span><br>'+ 
-						'<input type="range" min=0 max=1 value=0 step=0.001 id="' + channe + '" oninput="sliderDo(id, value)"><br>');
+						'<input type="range" min=0 max=1 value=0 step=0.0001 id="' + channe + '" oninput="sliderDoParam(id, value, '+ div +', ' + parnnn + ')"><br>');
+						
+						
+						
+			
 		} else if (channe.indexOf("pan") > -1){
 			//pan slider
 			document.write('pan<br>'+
@@ -1776,7 +1825,9 @@ gScurDir init "$GSCURDIR"
 #include "eff_fmer.txt"
 #include "eff_frequencyshift.txt"
 #include "eff_gate.txt"
+#include "eff_greenod.txt"
 #include "eff_harmonizer.txt"
+#include "eff_harmtrem.txt"
 #include "eff_highpass.txt"
 #include "eff_hilbert.txt"
 #include "eff_leslie.txt"
@@ -2540,21 +2591,23 @@ endin
 
 instr 125;pitch shifter
 $INMIXT
-$PARAMTP(1'giport)
+$PARAMTNP(1)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $PARAMTP(4'giport)
 $EFF_PITCHSHIFTER
+$PARAMVOUT(1'ktransp_)
 $OUTMIXT
 endin
 
 
 instr 126;pitch shifter spectral
 $INMIXT
-$PARAMTP(1'giport)
+$PARAMTNP(1)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $EFF_PITCHSHIFTERSPECTRAL
+$PARAMVOUT(1'ksemitones)
 $OUTMIXT
 endin
 
@@ -2734,28 +2787,40 @@ $PARAMTNP(1)
 $PARAMTNP(2)
 $PARAMTNP(3)
 $EFF_HARMONIZER
+$PARAMVOUT(1'ktonality)
+$OUTMIXT
+endin
+
+
+
+instr 156; harmonic tremolo
+$INMIXT
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$EFF_HARMTREM
 $OUTMIXT
 endin
 
 
 instr 160;tremoloBpm
 $INMIXT
-$PARAMTP(1'giport)
+$PARAMTNP(1)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
-$PARAMTP(4'giport)
 $EFF_TREMOLOBPM
+$PARAMVOUT(1'kmult)
 $OUTMIXT
 endin
 
 
 instr 161;delayBpm
 $INMIXT
-$PARAMTP(1'giport)
-$PARAMTP(2'giport*2)
+$PARAMTNP(1)
+$PARAMTP(2'giport)
 $PARAMTP(3'giport)
-$PARAMTP(4'giport)
 $EFF_DELAYBPM
+$PARAMVOUT(1'kstep)
 $OUTMIXT
 endin
 
@@ -2827,6 +2892,13 @@ $EFF_NIPPLEDIST
 $OUTMIXT
 endin
 
+instr 183;OVERDRIVE
+$INMIXT
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$EFF_GREENOD
+$OUTMIXT
+endin
 
 
 instr 1000;output

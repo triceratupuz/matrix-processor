@@ -1,0 +1,32 @@
+#define EFF_GREENOD#
+;A modified version of the Rory and Conor Walsh ICSC 2019 paper:
+;Digital Signal Processing Techniques Used to
+;Model the Ibanez Tube Screamer Guitar Pedal
+
+;kpar1 = dist
+;kpar2 = tone
+
+ifn1 ftgentmp 0, 123, 4097, "tanh", -180, 180
+ifn2 ftgentmp 0, 123, 1024, 4, ifn1, 1
+
+;high pass filter all frequencies above 720 mid-hump
+aHp butterhp ain, 1220
+
+;low pass all frequencies below mid hump frequency
+aLp butterlp ain, 1220
+
+;apply distortion to frequencies above mid-hump only
+aDist tablei (aHp + 1) / 2, ifn1, 1
+kScl tablei 1, ifn2, 1
+aDist CosSinMix aHp, aDist * kScl, kpar1;mix clean or distortion to emulate gain
+
+;apply low pass filter to distorted signal
+aDist tone aDist, 3090
+
+;sum distorted signal with original low pass filtered signal
+adistout = aDist + aLp
+
+;bad approximation of tone control
+aout tone adistout, 100 + 6000 * kpar2 * kpar2 
+
+#

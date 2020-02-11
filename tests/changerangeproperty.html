@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Page Title</title>
+</head>
+<body>
+
+<script>
+
+function sliderDo(id, value, retvv){
+	console.log(id);
+	console.log(value);
+	console.log(retvv);
+	if (retvv == 0) {
+		console.log("no indication")
+	} else {
+		console.log("show value")
+	}
+	
+}
+
+var retv = [0,0,0,0];
+
+document.write('Input  <input type="range" min=0 max=1 value=0 step=0.001 id="range1" oninput="sliderDo(id, value, 0)">');
+
+function retvchanger(){
+	if (retv[0] == 0){
+		retv[0] = 1;
+	} else {
+		retv[0] = 0;
+	}
+	console.log(retv)
+	
+	//replace element
+	var el = document.getElementById("range1");
+	var val = el.value;
+	var newEl = document.createElement('range');
+	newEl.innerHTML = '<input type="range" min=0 max=1 value=' + val + ' step=0.001 id="range1" oninput="sliderDo(id, value, '+ retv[0] +')">';
+	el.parentNode.replaceChild(newEl, el);
+
+
+}
+
+document.write('<input type="button" value="changeretv" id="retvchanger1"  onclick="retvchanger()">');
+</script>
+</body>
+</html>

@@ -16,8 +16,9 @@ iareolaW = i(kareolaW)
 
 ivc ftgentmp 0, 123, 1024, 7, -1, 512, 0, 512, 1
 ivd ftgentmp 0, 123, 1024, 7, -0.55, 512 - icrostee, -0.45, icrostee, 0, icrostee, iareolaH * 0.7, iareolaW, iareolaH, 512 - icrostee - iareolaW, 1
-ire ftgentmp 0, 123, 1024, 10, 1;result of ftmorph
+ire ftgentmp 0, 123, 1024, 7, 0, 512, 0, 512, 0;result of ftmorph
 iftfn ftgentmp 0, 123, 2, -2, ivc, ivd;tables for morphing
+ftmorf kpar1, iftfn, ire
 rireturn
 
 ktrig changed kpar_2, kpar_3, kpar_4
@@ -28,7 +29,7 @@ endif
 ain butlp ain, 5000
 ain buthp ain, 70
 
-ftmorf kpar1, iftfn, ire
+
 adist TransferFun ain, ire
 aout_ AtanLimit adist
 
