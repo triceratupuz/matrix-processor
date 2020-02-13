@@ -305,7 +305,8 @@ var channChanns = [["channel_n_in", 1],
 	["volume_n_", 1]];
 
 
-
+//para retrieve on current chain
+var para_retr = new Array(channels * 4).fill(0);
 
 
 //effect number and names
@@ -335,15 +336,15 @@ var mixerdefs = [["mix_ma", "matrixoutv", "Matrix", 100],
                               ["mix_l4",  "loop4outv", "Loop4", 107]]
 
 
-//midi configuration
-var fixedmididefs = [["freez1", 114, 176],
-                ["freez2", 115, 176],
-                ["freez3", 116, 176],
-                ["looprec1", 110, 176],
-                ["looprec2", 111, 176],
-                ["looprec3", 112, 176],
-                ["looprec4", 113, 176],
-                ["tap", 117, 176]];
+//midi configuration - changed to PC 192 instead of CC 176
+var fixedmididefs = [["freez1", 114, 192],
+                ["freez2", 115, 192],
+                ["freez3", 116, 192],
+                ["looprec1", 110, 192],
+                ["looprec2", 111, 192],
+                ["looprec3", 112, 192],
+                ["looprec4", 113, 192],
+                ["tap", 117, 192]];
 
 
 
@@ -363,7 +364,8 @@ function createEffList(effectsData){
 
 function createEffPara(effectsData){
     //create list with effect parameters
-    var effPara = [];//create space for 100 effects
+    var effPara = [];
+    //create space for 100 effects
     for (var idx = 0; idx < 100; idx++) {
         effPara.push(["", "", "", "", 0, 0, 0, 0]);
     }
@@ -619,26 +621,23 @@ function sliderDo(id, value) {
 }
 
 
+
+
+
 function sliderDoParam(id, value, div, parnnn) {
 /*to dispatch the value to the software 
     channel named after the slider id, just for param*/
     var numberValue = parseFloat(value);
     csoundApp.setControlChannel(id, numberValue);
-
-	//To verify if param must retrieve and display value from csound
-	//get index of effect type dropdown see effChange()
-	var ideff = "eff_n_".replace("_n_", div.toString());
-
-	var e = document.getElementById(ideff);
-              var strUser = e.options[e.selectedIndex].value;
-
-             var numberValue = parseInt(strUser);
-
-	//verify if the effect parameter must be returned
-	if (para[numberValue][parnnn + 3] > 0){
-		var parname = para[numberValue][parnnn  -1];
+	if (para_retr[(parseInt(div) - 1) * 4 + (parseInt(parnnn) -1)] > 0){
+		
+		
 		var spcid = "spc"+ div.toString() + "p" + parnnn.toString();//text with return value
-	    document.getElementById(spcid).textContent  = parname + ": - -";
+		console.log(div, parnnn);
+	    var spctxt = document.getElementById(spcid).textContent
+		var duepunti = spctxt.indexOf(":");
+		var parname = spctxt.slice(0,duepunti);
+		document.getElementById(spcid).textContent  = parname + ": - -";
 
 		//schedule read return channel from csound after 20 ms
 		setTimeout(function(spcid, parname) {
@@ -648,6 +647,9 @@ function sliderDoParam(id, value, div, parnnn) {
 	}
 	
 }
+
+
+
 
 function sliderDoParamRetieve(spcid, parname){
 	//update id="spc'+ div + 'p'+ parnnn + '"' text with return value
@@ -681,7 +683,6 @@ channel named after the slider id*/
     var destid = String(dest);
     csoundApp.setControlChannel(id, numberValue);
     var el = document.getElementById(destid);
-    //el.innerHTML = "BPM:" + value.toString();
     el.innerHTML = value.toString();
 }
 
@@ -721,7 +722,6 @@ function delayLimit(id, value, idmode) {
     time = valin;
   }
     csoundApp.setControlChannel(id, 1.0 * time);
-   //csoundApp.setControlChannel(id, valin);
 }
 
 
@@ -1015,19 +1015,32 @@ function doAndLimit(id, value, limit) {
 }
 
 
+
+
+
 function effChange(id) {
     /*send the effect number and update gui*/
+    //document.getElementById("spc7p4").textContent  = id;//ok
     var e = document.getElementById(id);
     var strUser = e.options[e.selectedIndex].value;
     var numberValue = parseFloat(strUser);
     csoundApp.setControlChannel(id, numberValue);
     // update params - ref to global list para
     var ch = id.substr(3);
+    //document.getElementById("spc7p4").textContent  = ch;//ok
     var  indexx  = parseInt(strUser);
     document.getElementById("spc"+ ch +"p1").textContent  = para[indexx][0];
     document.getElementById("spc"+ ch +"p2").textContent  = para[indexx][1];
     document.getElementById("spc"+ ch +"p3").textContent  = para[indexx][2];
     document.getElementById("spc"+ ch +"p4").textContent  = para[indexx][3];
+
+	//Update array with retrieve value flag
+	for (var parr = 1; parr <=4; parr++){
+		var idx = 4 * parseInt(ch - 1) + (parr -1)
+		para_retr[idx] = para[indexx][3 + parr];
+	}
+//var idxtest = 4 * parseInt(ch - 1) + (1 -1)
+//document.getElementById("spc7p4").textContent  = para_retr[idxtest];//ok
 }
 
 
@@ -1345,8 +1358,9 @@ for (div = 1; div <= channels; div++) {
 			
 			
 			var parnnn = channe.substr(channe.length -1);//number of parameter
+
 			document.write('<span id="spc'+ div + 'p'+ parnnn + '"></span><br>'+ 
-						'<input type="range" min=0 max=1 value=0 step=0.0001 id="' + channe + '" oninput="sliderDoParam(id, value, '+ div +', ' + parnnn + ')"><br>');
+						'<input type="range" min=0 max=1 value=0 step=0.0001 id="' + channe + '" oninput="sliderDoParam(id, value, '+ div.toString() +', ' + parnnn.toString() + ')"><br>');
 						
 						
 						
