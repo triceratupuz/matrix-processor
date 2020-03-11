@@ -12,3 +12,8 @@ Before launching it with Csound For Android:
 3. change the --env:INCRIR+=/absolute/path/to/include/directory in CsOptions
 
 
+## Credits
+I've used code/ideas from the following:
+* [Iain McCurdy](http://iainmccurdy.org/): the huge collection of csound examples  
+* [Oeyvind Brandtsegg](http://oeyvind.teks.no): the code of the compressor effect
+* [Per Boysen](http://www.perboysen.com): for having and sharing the idea of the [Steppophonic Looperformer](http://www.perboysen.com/steppophonic-looperformer-please-steal-this/)

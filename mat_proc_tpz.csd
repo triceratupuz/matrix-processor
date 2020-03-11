@@ -66,7 +66,7 @@ label {
           border-style:solid;
           border-width: 1px;
           border-color:#000000;
-          column-count:4;
+          column-count:6;
 }
 
 .time {
@@ -146,9 +146,24 @@ input[type=range].vertical2 {
 	height:8%;
 	width:5%;
 	vertical-alig:middle;
-              horizontal-alig:middle;
-              //padding:5px;
+    horizontal-alig:middle;
+
 }
+
+
+input[type=range].vertical2mix {
+	/*vertical slider*/
+	-webkit-appearance: slider-vertical;
+	border-radius:8px;
+	box-shadow: inset 0 0 5px #555;
+	backgroud-color: #999;
+	height:50%;
+	width:5%;
+	vertical-alig:middle;
+    horizontal-alig:middle;
+
+}
+
 
 input[type=number] {
     width:5em;
@@ -208,16 +223,41 @@ input[type=button].footdh {
                font-size:2.2em;
 }
 
-input[type=button].ttpc {
-               width:32%;
+
+#pad {
+	border:1px solid #111111;
 }
 
 
-#pad {
-	//position:absolute;
-              //left:0px;
-              //top:0px;
-	border:1px solid #111111;
+//STEPPO
+#steppopad {
+	border:1px solid #CC1111;
+}
+
+.steppodiv {
+	float:left;
+    width:5%;
+	font-size:1.3em;
+	text-align:center;
+}
+
+
+input[type=button].steppopreset{
+	width:3.9%;
+}
+
+input[type=button].stepporec{
+              width:99%;
+              font-size:1.9em;
+}
+
+input[type=button].steppoplay{
+              width:100%;
+              font-size:3.0em;
+}
+
+input[type=button].steppo100{
+              width:100%;
 }
 
 
@@ -333,18 +373,23 @@ var mixerdefs = [["mix_ma", "matrixoutv", "Matrix", 100],
                               ["mix_l1",  "loop1outv", "Loop1", 104],
                               ["mix_l2",  "loop2outv", "Loop2", 105],
                               ["mix_l3",  "loop3outv", "Loop3", 106],
-                              ["mix_l4",  "loop4outv", "Loop4", 107]]
+                              ["mix_st",  "steppooutv", "Steppo", 107],
+                              ["mix_mas", "totaloutv", "Master", 108]];
 
 
 //midi configuration - changed to PC 192 instead of CC 176
-var fixedmididefs = [["freez1", 114, 192],
-                ["freez2", 115, 192],
-                ["freez3", 116, 192],
-                ["looprec1", 110, 192],
-                ["looprec2", 111, 192],
-                ["looprec3", 112, 192],
-                ["looprec4", 113, 192],
-                ["tap", 117, 192]];
+var fixedmididefs = [["freez1", 114, 192, "Freeze 1"],
+                ["freez2", 115, 192, "Freeze 2"],
+                ["freez3", 116, 192, "Freeze 3"],
+                ["looprec1", 110, 192, "Looper 1"],
+                ["looprec2", 111, 192, "Looper 2"],
+                ["looprec3", 112, 192, "Looper 3"],
+                ["stepporec1", 105, 192, "Steppo Sample 1"],
+                ["stepporec2", 106, 192, "Steppo Sample 2"],
+                ["stepporec3", 107, 192, "Steppo Sample 3"],
+                ["stepporec4", 108, 192, "Steppo Sample 4"],
+                ["steppoplay", 109, 192, "Steppo Play"],                                
+                ["tap", 117, 192, "Tap Tempo"]];
 
 
 
@@ -461,6 +506,10 @@ function loaderMidi(message) {
                 freezPlayRec(idmid);
             } else if (idmid.search("tap") >= 0) {
                 set_tap("tap");
+            } else if (idmid.search("stepporec") >= 0){
+               steppoRec(idmid);
+            } else if (idmid.search("steppoplay") >= 0){
+                steppoPlay(idmid);
             }
         }
     }
@@ -545,13 +594,14 @@ createCcChannelNumber();
 
 
 function createGuiControllerCC(ccc){
+    document.write('</select>parameter<br>');
     document.write('<select id="ccmidiC' + ccc + '" onchange="manageMidiCcSettings(id, ' + ccc + ', value)">');
     //must send value to csound to memorize and save in javascript for full control
     document.write('<option value="-1">off</option>');
     for(var i = 0; i< cc_cha_def.length; i++){
         document.write('<option value="' + i + '">' + cc_cha_def[i] + '</option>');
     }
-    document.write('</select>parameter<br>');
+    
     document.write('<input type="number" class="head" min=0 max=127 step="1" value=0 id="ccmidiV'+ ccc + '" onchange="manageMidiCcSettings(id, ' + ccc + ', value)">CC<br>');
     document.write('<input type="number" class="head" min=0 max=1 step="0.001" value=0 id="ccmidim'+ ccc + '" onchange="manageMidiCcSettings(id, ' + ccc + ', value)">min<br>');
     document.write('<input type="number" class="head" min=0 max=1 step="0.001" value=0 id="ccmidiM'+ ccc + '" onchange="manageMidiCcSettings(id, ' + ccc + ', value)">max<br>');
@@ -1045,20 +1095,24 @@ function effChange(id) {
 
 
 
-function toggler(id1, id2, id3, id4) {
+function toggler(id1, id2, id3, id4, id5, id6) {
     /*toggle divs views*/
     var e1 = document.getElementById(id1);
     var e2 = document.getElementById(id2);
     var e3 = document.getElementById(id3);
     var e4 = document.getElementById(id4);
+	var e5 = document.getElementById(id5);
+	var e6 = document.getElementById(id6);
+
     e1.style.display = 'block';
     e2.style.display = 'none';
     e3.style.display = 'none';
     e4.style.display = 'none';
+    e5.style.display = 'none';
+    e6.style.display = 'none';
 
     var viewport_meta = document.getElementById('viewport_meta'); 
-    //content="width=device-width, minimum-scale=1.0, maximum-scale=5.0"
-    if (id1 == 'trackpad') {
+    if (id1 == 'trackpad' || id1 == 'steppo') {
         viewport_meta.setAttribute( 'content', "width=device-width, minimum-scale=1.0, maximum-scale=1.0");
     } else {
         viewport_meta.setAttribute( 'content', "width=device-width, minimum-scale=1.0, maximum-scale=5.0");
@@ -1076,8 +1130,12 @@ function loada() {
     elop.style.display = 'none';
     var elom = document.getElementById('midiw');
     elom.style.display = 'none';
+    var elst = document.getElementById('steppo');
+    elst.style.display = 'none';
     var elot = document.getElementById('trackpad');
     elot.style.display = 'none';
+    var elmi = document.getElementById('mixerout');
+    elmi.style.display = 'none';
     metronome();
 }
 
@@ -1124,9 +1182,10 @@ var myVar = setInterval(myTimed, 700);
 //Function to be performed by Global timer
 function myTimed() {
     // update looper button aspect
-    for (nnn =1; nnn <= 4; nnn++) {
+    for (nnn =1; nnn <= 3; nnn++) {
          recButUpdateT(nnn);
     }
+    
     // update vumeter
     vuMeter("totaloutv");
     vuMeter("matrixoutv");
@@ -1136,19 +1195,24 @@ function myTimed() {
     vuMeter("loop1outv");
     vuMeter("loop2outv");
     vuMeter("loop3outv");
-    vuMeter("loop4outv");
+    vuMeter("steppooutv");
      // update thresholds
     updThr("autothr1");
     updThr("autothr2");
     updThr("autothr3");
-    updThr("autothr4");
     //repeat change
     updThr("ol_re1");
     updThr("ol_re2");
     updThr("ol_re3");
-    updThr("ol_re4");
     //number of active chains
     updChIndicator();
+    //steppo buttons update
+    activesteppo();
+    activestepRec(1);
+    activestepRec(2);
+    activestepRec(3);
+    activestepRec(4);
+    
 }
 
 
@@ -1293,17 +1357,24 @@ window.onload = function(){loada();};
 
 <div class ="headerv">
      <div>
-     <input type="button" class='viuw' value="matrix" id="matr" onclick="toggler('matrix', 'loopers', 'midiw', 'trackpad')">
+     <input type="button" class='viuw' value="matrix" id="matr" onclick="toggler('matrix', 'loopers', 'midiw', 'trackpad', 'steppo', 'mixerout')">
      </div>
      <div>
-     <input type="button" class='viuw' value="midi" id="miid" onclick="toggler('midiw', 'loopers', 'matrix', 'trackpad')">
+     <input type="button" class='viuw' value="midi" id="miid" onclick="toggler('midiw', 'loopers', 'matrix', 'trackpad', 'steppo', 'mixerout')">
      </div>
      <div>
-     <input type="button" class='viuw' value="tpad" id="tpad" onclick="toggler('trackpad', 'midiw', 'loopers', 'matrix')">
+     <input type="button" class='viuw' value="tpad" id="tpad" onclick="toggler('trackpad', 'midiw', 'loopers', 'matrix', 'steppo', 'mixerout')">
      </div>
      <div>
-     <input type="button" class='viuw' value="looper" id="looo" onclick="toggler('loopers', 'matrix', 'midiw', 'trackpad')">
+     <input type="button" class='viuw' value="looper" id="looo" onclick="toggler('loopers', 'matrix', 'midiw', 'trackpad', 'steppo', 'mixerout')">
      </div>
+	 <div>
+     <input type="button" class='viuw' value="steppo" id="steppob" onclick="toggler('steppo', 'trackpad', 'midiw', 'loopers', 'matrix', 'mixerout')">
+     </div>
+ 	 <div>
+     <input type="button" class='viuw' value="mixerout" id="mixeroutb" onclick="toggler('mixerout', 'steppo', 'trackpad', 'midiw', 'loopers', 'matrix')">
+     </div>
+
 </div>
 
 <script>
@@ -1419,16 +1490,7 @@ PC 0 - 99 : matrix preset 0 to 99<br>
         } else {
             msgtypestr="BHO";
         }
-        if (idmid.search("looprec") >= 0) {
-            whatiscon = "Looper" + idmid.substr(-1);
-        } else if (idmid.search("freez") >= 0) {
-            whatiscon = "Freeze" + idmid.substr(-1);
-        } else if (idmid.search("tap") >= 0) {
-            whatiscon = "Tap tempo";
-        } else {
-            msgtypestr="BHO";
-        }
-        document.write(whatiscon + " : " + msgtypestr + " "  + fixedmididefs[readmidit][1] + "<br>");
+        document.write(fixedmididefs[readmidit][3] + " : " + msgtypestr + " "  + fixedmididefs[readmidit][1] + "<br>");
      }
 </script>
 
@@ -1473,7 +1535,8 @@ var top_at = findTopLeft("pad")[1];
 
 function findTopLeft(element) {
   var rec = document.getElementById(element).getBoundingClientRect();
-  return [rec.left + window.scrollX, rec.top + window.scrollY];
+  //return [rec.left + window.scrollX, rec.top + window.scrollY];
+    return [rec.left, rec.top];
 } 
 
 
@@ -1621,11 +1684,463 @@ pad.addEventListener("touchmove" , function(e) {
 
 
 
+<div id="steppo">
+	<br>
+	
+	<div class="steppodiv">
+    	<h1>G<br>r<br>i<br>d<br></h1>
+    </div>
+	
+	<div class="timew">
+	    <input type="button" class="steppo100" value="More Steps" id="steppostepsp" onclick="steppoSteps(id, 1)"><br>
+	    <input type="button" class="steppo100" value="Less Steps" id="steppostepsm" onclick="steppoSteps(id, -1)"><br>
+		<input type="button" class="steppo100" value="time Q" id="steppotq" onclick="steppotQ(id)"><br>
+		<input type="button" class="steppo100" value="pitch Q" id="steppopq" onclick="steppopQ(id)"><br>
+		
+
+		
+		<select id="stepposamgrid">
+		<script>
+			var samplerColo = ["", "#990000", "#00aa00", "#0000ff", "#00ffff"];
+			for (var sacolo = 1; sacolo <= 4; sacolo ++){
+				document.write('<option style="color:' + samplerColo[sacolo] + '" value="'+ sacolo +'">Sample '+ sacolo + '</option>');
+			}
+		</script>
+		
+		</select><br>
+
+	</div>
+	
+	<div class="steppodiv">
+    	<h1>R<br>e<br>c<br></h1>
+    </div>
+
+    <div class="timew">
+    	<select id="steppoInput" class= "foot" onchange="selectDo(id)">
+		    <option value="0" selected>from matrix</option>
+		    <option value="1">from loop 1</option>
+		    <option value="2">from loop 2</option>
+		    <option value="3">from loop 3</option>
+		    <option value="4">direct in</option>
+	</select><br>
+	    <input type="button" class="stepporec" value="Sample 1" id="stepporec1" onclick="steppoRec(id)"><br>
+	    <input type="button" class="stepporec" value="Sample 2" id="stepporec2" onclick="steppoRec(id)"><br>
+	    <input type="button" class="stepporec" value="Sample 3" id="stepporec3" onclick="steppoRec(id)"><br>
+	    <input type="button" class="stepporec" value="Sample 4" id="stepporec4" onclick="steppoRec(id)"><br>
+
+	</div>
+
+    <div class="steppodiv">
+    	<h1>P<br>l<br>a<br>y<br></h1>
+    </div>
+
+	<div class="timew">
+	    <input type="button" class="steppoplay" value="Play" id="steppoplay" onclick="steppoPlay(id)"><br>
+	    <select class= "foot" id="steppoplaymode" onchange="selectDo(id)">
+	    	<option value="0">Loop</option>
+	    	<option value="1">One Shot</option>
+		</select><br>
+		 <select class= "foot" id="steppostartmode" onchange="selectDo(id)">
+	    	<option value="0">after rec</option>
+	    	<option value="1">free start</option>
+		</select>
+	</div>
+
+	
+	<div class="timew">
+		<select class= "foot" id="steppospeedloop" onchange="selectDo(id)">
+	    	<option value="0.125">1/8</option>
+	    	<option value="0.14285714285">1/7</option>
+	    	<option value="0.166666666666">1/6</option>
+	    	<option value="0.2">1/5</option>
+	    	<option value="0.25">1/4</option>
+	    	<option value="0.3333333333">1/3</option>
+	    	<option value="0.5">1/2</option>
+	    	<option value="1" selected>1</option>
+	    	<option value="2">2</option>
+	    	<option value="3">3</option>
+	    	<option value="4">4</option>
+	    	<option value="5">5</option>
+	    	<option value="6">6</option>
+	        <option value="7">7</option>
+	    	<option value="8">8</option>
+    	</select><br><br>
+		<input type="range" class="" min=0 max=1 value=0.5 step=0.001 id="steppo_sppp" oninput="sliderDo(id, value)"><br>
+
+    	<input type="button" class="steppo100" value="to 1" id="stepporesetol" onclick="steppoto1(id)"><br><br>
+		<input type="button" class="steppo100" value="Tape" id="steflenght" onclick="steflenght(id)">
+		</div>
+
+	
+	<div class="timew" align="center">
+	    to<br>matrix<br>
+        <input type="range" class="vertical2" min=0 max=1 value=0 step=0.001 id="loop_in_masteppo" oninput="sliderDo(id, value)">
+	</div>
+	
+	<div style="clear:both;"><br><br></div>	
+
+	<div>
+		<canvas id="steppopad"></canvas>
+	</div>
+
+		<script>
+                           
+		var steppopad = document.getElementById("steppopad");
+		
+		var ctx_steppopad = steppopad.getContext("2d");
+		
+		var left_at = findTopLeft("steppopad")[0];
+		var top_at = findTopLeft("steppopad")[1];
+
+		var canvasStW = window.innerWidth * 0.98;
+		var canvasStH = window.innerHeight;
+		steppopad.width = canvasStW;
+		steppopad.height = canvasStH * 0.6;
+
+		var steppomaxloop = 8;
+		var steppomaxsemi = 13;
+		
+		var cssteppoftn = 249;//csound ftable that store current steppo table
+		
+		function onResaizSteppo() {
+		    canvasStW = window.innerWidth * 0.98;
+		    canvasStH = window.innerHeight;
+		    var top_coords = findTopLeft("steppopad");
+		    top_at = top_coords[1];
+		    left_at = top_coords[0];
+		    steppopad.width = canvasStW;
+		    steppopad.height = canvasStH* 0.6;
+			//Draw
+			steppoHorGrid();
+			steppoVerGrid();
+			steppoPoints();
+		}
+		
+		
+		function steppoHorGrid(){
+			var horstep = steppopad.height / (steppomaxsemi * 2);
+			for (var hor = 0 ; hor <= (steppomaxsemi * 2); hor++){
+			    var step = (steppomaxsemi - hor).toString();
+			    if (step == "0") {
+			        ctx_steppopad.strokeStyle = "#990000";
+			        ctx_steppopad.fillStyle = "#990000";
+			    } else {
+			        ctx_steppopad.strokeStyle = "#555555";
+			        ctx_steppopad.fillStyle = "#555555";
+			    }
+			
+	   	     ctx_steppopad.beginPath();
+	    		ctx_steppopad.moveTo(0, horstep * hor);
+	    		ctx_steppopad.lineTo(steppopad.width, horstep * hor);
+	    		ctx_steppopad.stroke();
+				
+				ctx_steppopad.font = "10px Arial";
+				ctx_steppopad.fillText(step, 10, horstep * hor + 3);
+				
+			}
+		}
+		
+		function steppoVerGrid(){
+			ctx_steppopad.strokeStyle = "#555555";
+			ctx_steppopad.fillStyle = "#555555";
+			var verstep = steppopad.width / (steppomaxloop + 1);
+			for (var hor = 0 ; hor <= steppomaxloop; hor++){
+				var step = hor.toString();
+	   			ctx_steppopad.beginPath();
+	    		ctx_steppopad.moveTo(verstep * (hor + 1), 0);
+	    		ctx_steppopad.lineTo(verstep * (hor + 1), steppopad.height);
+	    		ctx_steppopad.stroke();
+				
+				ctx_steppopad.font = "10px Arial";
+				ctx_steppopad.fillText(step, verstep * (hor + 1) -10, 10);
+				
+			}
+		}
+		
+		
+		function steppoXtoTime(x){
+			return ((steppomaxloop + 1) * x / steppopad.width) - 1
+		}
+		
+		function steppoTimetoX(t){
+			return (t +1) * steppopad.width / (steppomaxloop + 1);
+		}
+		
+		function steppoYtoPitch(y){
+			return steppomaxsemi - (y * (steppomaxsemi * 2) / steppopad.height);
+		}
+
+		function steppoPitchtoY(s){
+			return (steppomaxsemi - s) * steppopad.height / (steppomaxsemi * 2);
+		}
+		
+		function steppotouchStart(e){
+			/*add or remove point*/
+			//get sample to be assigned
+			console.log("starte");
+			var sampel = document.getElementById("stepposamgrid");
+			var sampstr = sampel.options[sampel.selectedIndex].value;
+			var samp = parseInt(sampstr);//sample to be used
+    		
+			//store start point
+		    //var touchlist = e.changedTouches;
+		    top_at = findTopLeft("steppopad")[1];
+		    left_at = findTopLeft("steppopad")[0];
+		    ctx_steppopad.clearRect(0, 0, pad.width, pad.height);
+		    //position touch
+    		
+			//var x = touchlist[0].clientX - left_at;
+    		//var y = touchlist[0].clientY - top_at;
+			
+			//position click for testing
+			var x = (e.clientX - left_at);
+    		var y = (e.clientY - top_at);
+			//change data type
+			var t = steppoXtoTime(x);
+			var s = steppoYtoPitch(y);
+			//console.log(t, s);
+			//instrument
+			var steppotableL = steppotable.length;
+			for (var steppopoint = 0; steppopoint <= steppotableL; steppopoint++){
+				if (steppopoint < steppotableL) {
+					var tt = steppotable[steppopoint][0];
+					var sampt = steppotable[steppopoint][1];
+					var st = steppotable[steppopoint][2];
+					if (samp == sampt) {
+						//remove
+						var erro = 0.3
+						if (t >= (tt - erro) && t <= (tt + erro)) {
+							if 	((s >= (st - erro)) && (s <= (st + erro))){
+									steppotable.splice(steppopoint, 1);
+									actualsteppo -= 1;
+								break
+							}
+						}
+					}
+				} else {
+					//add
+					if (document.getElementById("steppotq").value == "time Q") {
+						t = Math.round(t);
+					}
+					if (document.getElementById("steppopq").value == "pitch Q") {
+						s = Math.round(s);
+					}
+                    if (Math.abs(s) <= (steppomaxsemi  -1) && actualsteppo < maxsteppotable) {
+					    steppotable.push([t, samp, s]);
+					    actualsteppo += 1;
+                    }
+				}
+				
+				
+			}
+			
+			//sort array
+			steppotable.sort(function (a,b){
+				 if ( a[0] == b[0] ) return 0;
+	 				return a[0] < b[0] ? -1 : 1;
+			});
+			
+			//console.log(steppotable); 
+			setSteppoTable();
+			steppoDraw();
+		}
+
+		
+		//var steppotable = new Array(30).fill([-1,-1,-1]);//start,instr,pitch
+		var maxsteppotable = 30;
+		var actualsteppo = 0;
+		var steppotable = [];
+		
+		
+		
+		function getSteppoTable(){
+			/*get steppo table from csound*/
+			//csoundApp.TableLength(cssteppoftn);
+			//csoundApp.TableGet(functionTableID, index)
+		}
+
+		function setSteppoTable(){
+			/*set steppo table in csound*/
+			for (var steppo = 0; steppo < maxsteppotable; steppo++){
+				var ta = -1;
+				var sa = -1;
+				var se = 1;
+				if (steppo < actualsteppo && steppotable.length > 0){
+					ta = steppotable[steppo][0];
+					sa = steppotable[steppo][1];
+					se = steppotable[steppo][2];
+				}
+                csoundApp.setControlChannel("steppotableta"+steppo.toString(), ta);
+				csoundApp.setControlChannel("steppotablesa"+steppo.toString(), sa);
+				csoundApp.setControlChannel("steppotablese"+steppo.toString(), se);
+			}
+			csoundApp.setControlChannel("steppotablechanged", 1);
+		}
+		
+		
+		
+		function steppoPoints(){
+			/*draw points on steppo
+           a circle at begin*/
+             for (var point = 0; point < steppotable.length; point++) {
+                 if (steppotable[point][0] >= 0){
+                     var colo  = samplerColo[steppotable[point][1]];
+                     ctx_steppopad.strokeStyle = colo;
+                     ctx_steppopad.fillStyle = colo;
+                     ctx_steppopad.beginPath();
+                     var x = steppoTimetoX(steppotable[point][0]);
+                     var y = steppoPitchtoY(steppotable[point][2]);
+					 var r = steppopad.height / (steppomaxsemi*3);
+                     ctx_steppopad.arc(x, y, r, 0, 2 * Math.PI);
+                     ctx_steppopad.fill();
+                     ctx_steppopad.stroke();
+                  }
+             }
+		}
+		
+		function steppoDraw(){
+			ctx_steppopad.clearRect(0, 0, steppopad.width, steppopad.height);
+			steppoHorGrid();
+			steppoVerGrid();
+			steppoPoints();
+		}
+		
+		function steppoSteps(id, val){
+			/*change value of steps*/
+			steppomaxloop += parseInt(val);
+			if (steppomaxloop <= 2){steppomaxloop = 2}
+			steppoDraw()
+			
+			csoundApp.setControlChannel("steppoSteps", steppomaxloop);
+		}
+		
+		
+		function steppotQ(id){
+			/*quantization on off*/
+			if (document.getElementById(id).value == "time Q"){
+				document.getElementById(id).value = "time unQ";
+			} else {
+				document.getElementById(id).value = "time Q";
+			}
+		}
+		
+		function steppopQ(id){
+			/*quantization on off*/
+			if (document.getElementById(id).value == "pitch Q"){
+				document.getElementById(id).value = "pitch unQ";
+			} else {
+				document.getElementById(id).value = "pitch Q";
+			}
+		}
+	
+		
+		function steppoRec(id){
+			//start stop recording of the sample
+			//var el = document.getElementById(id);
+			var currentbutton = csoundApp.getControlChannel(id);
+			if (currentbutton == 0){
+				csoundApp.setControlChannel(id, 1);
+			} else {
+				csoundApp.setControlChannel(id, 0);
+			}
+		}
+		
+		function activestepRec(stp){
+		    //update rec buttons
+		    var el = document.getElementById("stepporec"+stp.toString());
+		    var activestepporec = csoundApp.getControlChannel("activestepporec" + stp.toString());
+		    if (el.value == "Sample " + stp.toString() && activestepporec == 1){
+				el.value = "Rsample" + stp.toString();
+				el.style.background = samplerColo[parseInt(stp)];
+				el.style.color = "#000000";
+			} else if(el.value ==  "Rsample" + stp.toString() && activestepporec == 0){
+				el.value = "Sample " + stp.toString();
+				el.style.background="#bbbbbb";
+				el.style.color = samplerColo[parseInt(stp)];
+				csoundApp.setControlChannel("stepporec"+stp.toString(), 0);
+			}
+		}
+		
+		function steppoPlay(id){
+			//var el = document.getElementById(id);
+			//var activesteppo = csoundApp.getControlChannel("activesteppo");
+			var currentbutton = csoundApp.getControlChannel(id);
+			if (currentbutton == 0){
+				csoundApp.setControlChannel(id, 1);
+			} else {
+				csoundApp.setControlChannel(id, 0);
+			}
+		}
+		
+		function activesteppo(){
+		/*graphical update of button*/
+			var el = document.getElementById("steppoplay");
+			var activesteppo = csoundApp.getControlChannel("activesteppo");
+			if (el.value == "Play" && activesteppo == 1){
+				el.value = ">>>>";
+				el.style.background = '#dd0000';
+				//csoundApp.setControlChannel(id, 1);
+			} else if(el.value == ">>>>" && activesteppo == 0) {
+				el.value = "Play";
+				el.style.background="#bbbbbb";
+				csoundApp.setControlChannel("steppoplay", 0);
+			}
+		}
+		
+		function steppoto1(id){
+			document.getElementById("steppo_sppp").value = 0.5;
+			csoundApp.setControlChannel("steppo_sppp", 0.5);
+		}
+		
+		
+		function steflenght(id){
+			if (document.getElementById(id).value == "Pitch"){
+				document.getElementById(id).value = "Tape";
+                csoundApp.setControlChannel(id, 1);
+			} else {
+				document.getElementById(id).value = "Pitch";
+                csoundApp.setControlChannel(id, 0);
+			}
+		}
+		
+		
+		
+		
+		
+		
+
+		onResaizSteppo();
+		window.addEventListener("resize", onResaizSteppo);
+		/*
+		steppopad.addEventListener("touchstart", function(e) {
+    		     steppotouchStart(e);
+    		     e.preventDefault();
+		}, false);
+		*/
+		steppopad.addEventListener("click", function(e) {
+    		     steppotouchStart(e);
+    		     e.preventDefault();
+		}, false);
+		
+		csoundApp.setControlChannel("steppoSteps", steppomaxloop);
+		csoundApp.setControlChannel("steppospeedloop", 1);
+		csoundApp.setControlChannel("steppo_sppp", 1);
+		csoundApp.setControlChannel("steflenght", 1);
+		csoundApp.setControlChannel("activesteppo", 0);
+		csoundApp.setControlChannel("activestepporec1", 0);
+		csoundApp.setControlChannel("activestepporec2", 0);
+		csoundApp.setControlChannel("activestepporec3", 0);
+		csoundApp.setControlChannel("activestepporec4", 0);
+		</script>
+	
+</div>
+
+
 
 <div id="loopers">
 <br>
 <script>
-var loopersqty = 4;
+var loopersqty = 3;
 
 for (lop =1; lop <= loopersqty; lop++) {
 
@@ -1666,9 +2181,9 @@ for (lop =1; lop <= loopersqty; lop++) {
     document.write('<input type="number" class="foot" min=0 max=60 value=1.000 step=0.001 id="ol_ti' + lop + '" onchange="delayLimit(id, value' + ", 'outtimeum" + lop + "')"+ '">');
 
     //Time Copy buttons
-    for (var con = 1; con <= 4; con++){
+    for (var con = 1; con <= 3; con++){
         if (con != lop) {
-            document.write('<input type="button" class="ttpc" value="T=' + con + '" id="ol_ticop' + con + '_' + lop + '" onclick="delayTimeCopy(' + lop + ', '  + con + ')">');
+            document.write('<input type="button" value="T=' + con + '" id="ol_ticop' + con + '_' + lop + '" onclick="delayTimeCopy(' + lop + ', '  + con + ')">');
         }
     }
 
@@ -1689,7 +2204,6 @@ for (lop =1; lop <= loopersqty; lop++) {
 
     document.write('<input type="range" class="" min=0 max=1 value=0.5 step=0.001 id="ol_sppp' +lop+ '" oninput="sliderDo(id, value)">');
 
-    //document.write('<input type="button" class= "viuw" value="to 1" id="resetol_sppp' + lop+ '" onclick="to1(' + lop + ')">');
     document.write('<input type="button" value="to 1" id="resetol_sppp' + lop+ '" onclick="to1(' + lop + ')">');
     document.write('<input type="button" value="fPitch" id="ol_fixp' + lop+ '" onclick="fixpitch(' + lop + ')">');
 
@@ -1745,7 +2259,6 @@ for (lop =1; lop <= loopersqty; lop++) {
         <option value="1">loop1</option>
         <option value="2">loop2</option>
         <option value="3">loop3</option>
-        <option value="4">loop4</option>
         <option value="5">direct in</option>
      </select>
     <br>
@@ -1770,28 +2283,29 @@ for (var frezz = 1; frezz <= freezersqty; frezz++) {
 }
 </script>
 
+</div>
+<!--div style="clear:both;"></div>
+<br-->
 
-<div style="clear:both;"></div>
-<br>
-
-<div>
-<h1 id="totaloutv">Mixer</h1>
-<div class="mixeritem">
-    <input type="range" class="vertical2" min=0 max=1 value=0 step=0.001 id="mix_in" oninput="sliderDo(id, value)"><br>Direct
+<div id="mixerout">
+	<!--h1 id="totaloutv">Mixer</h1-->
+	<div class="mixeritem">
+	    Direct<br>
+	    <input type="range" class="vertical2mix" min=0 max=1 value=0 step=0.001 id="mix_in" oninput="sliderDo(id, value)">
+	</div>
+	
+	<script>
+	//output mixer
+	for (var mixcount = 0; mixcount < mixerdefs.length; mixcount++) {
+	    document.write('<div class="mixeritem"><span id="' + 
+	        mixerdefs[mixcount][1] + '">' + mixerdefs[mixcount][2] + '</span><br>'+ 
+	        '<input type="range" class="vertical2mix" min=0 max=1 value=0.5 step=0.001 id="'+
+	         mixerdefs[mixcount][0] + 
+	         '" oninput="sliderDo(id, value)"></div>');
+	}
+	</script>
 </div>
 
-<script>
-//output mixer
-for (var mixcount = 0; mixcount < mixerdefs.length; mixcount++) {
-    document.write('<div class="mixeritem">'+ 
-        '<input type="range" class="vertical2" min=0 max=1 value=0.5 step=0.001 id="'+
-         mixerdefs[mixcount][0] + 
-         '" oninput="sliderDo(id, value)"><br><span id="' + 
-        mixerdefs[mixcount][1] + '">' + mixerdefs[mixcount][2] + '</span></div>');
-}
-</script>
-
-</div>
 
 </body>
 </html>
@@ -1940,6 +2454,20 @@ giSquare ftgen 140, 0, 16384, 8, 0, 10*2, 1, 4080*2, 1, 9*2, -1, 4080*2, -1, 10*
 gihalfsine ftgen	149, 0, 4097, 9, 0.5, 1, 0
 gigrainenv ftgen 150, 0, 4096, 7, 0, 4096/2, 1, 4096/2, 0 
 
+;Steppo ftablel
+gisteppotime ftgen 200, 0, 4, -2, 0, 0, 0, 0
+gisteppomax init 10
+giSteppoS1L ftgen 202, 0, sr * gisteppomax, 10, 0
+giSteppoS1R ftgen 203, 0, sr * gisteppomax, 10, 0
+giSteppoS2L ftgen 204, 0, sr * gisteppomax, 10, 0
+giSteppoS2R ftgen 205, 0, sr * gisteppomax, 10, 0
+giSteppoS3L ftgen 206, 0, sr * gisteppomax, 10, 0
+giSteppoS3R ftgen 207, 0, sr * gisteppomax, 10, 0
+giSteppoS4L ftgen 208, 0, sr * gisteppomax, 10, 0
+giSteppoS4R ftgen 209, 0, sr * gisteppomax, 10, 0
+gistepposeqp ftgen 249, 0, 128, -2, 0
+
+
 
 ;Global parameter values for pvsanal
 gifftsize  = 1024;larger value higher precision
@@ -2018,6 +2546,7 @@ event_i "i", 52, 0, -1
 event_i "i", 90, 0, -1, 0, 0;fixed
 event_i "i", 1001, 0, -1
 event_i "i", 1100, 0, -1
+event_i "i", 1500, 0, -1;steppocontrol
 event_i "i", 2000, 0, -1, 0, 0
 
 endin
@@ -3013,40 +3542,28 @@ elseif changed(kactiv_mode3) == 1 && kactiv_mode3 == 0 && kactiv_loop3 == 1 then
     event "i", -1004.3, 0, -1
 endif
 
-chnset 1,  "ol_ti4"
-kactiv_mode4 chnget "autothrmode4"
-kactiv_mode4 init 0
-kactiv_loop4 init 0
-if changed(kactiv_mode4) == 1 && kactiv_mode4 > 0 && kactiv_loop4 == 0 then
-    kinittime4 chnget "ol_ti4"
-    kactiv_loop4 = 1
-    event "i", 1004.4, 0, -1, 4, kinittime4
-elseif changed(kactiv_mode4) == 1 && kactiv_mode4 == 0 && kactiv_loop4 == 1 then
-    kactiv_loop4 = 0
-    event "i", -1004.4, 0, -1
-endif
 
 ;start loopers
 kactiv_loop1 init 1 
 kactiv_loop2 init 1 
 kactiv_loop3 init 1 
-kactiv_loop4 init 1 
+
 chnset 1, "autothrmode1"
 chnset 1, "autothrmode2"
 chnset 1, "autothrmode3"
-chnset 1, "autothrmode4"
+
 chnset 0.5, "ol_sppp1"
 chnset 0.5, "ol_sppp2"
 chnset 0.5, "ol_sppp3"
-chnset 0.5, "ol_sppp4"
+
 chnset 0, "ol_fixp1"
 chnset 0, "ol_fixp2"
 chnset 0, "ol_fixp3"
-chnset 0, "ol_fixp4"
+
 event_i "i", 1004.1, 0, -1, 1, 1
 event_i "i", 1004.2, 0, -1, 2, 1
 event_i "i", 1004.3, 0, -1, 3, 1
-event_i "i", 1004.4, 0, -1, 4, 1
+
 endin
 
 
@@ -3168,6 +3685,271 @@ endin
 
 
 
+instr 1500;steppo control
+;clean steppo output
+gaoutMix[10] = 0
+gaoutMix[11] = 0
+event_i "i", 1560, 0, -1;loop out steppo to in matrix
+
+;Record samples
+ksteppoinput chnget "steppoInput";0_matrix, 1_loop1, 2_loop2, 3_loop3, 4_direct in
+kstartmode chnget "steppostartmode"
+
+kstepporec1 chnget "stepporec1"
+if kstepporec1 == 1 && changed(kstepporec1) == 1 then
+	event "i", 1510.1, 0, -1, 1
+	chnset k(1), "activestepporec1"
+elseif kstepporec1 == 0 && changed(kstepporec1) == 1 then
+	event "i", -1510.1, 0, 0.1, 1
+	chnset k(0), "activestepporec1"
+	if kstartmode == 0 then
+	    chnset k(1), "steppoplay"
+	endif
+endif
+
+kstepporec2 chnget "stepporec2"
+if kstepporec2 == 1 && changed(kstepporec2) == 1 then
+	event "i", 1510.2, 0, -1, 2
+	chnset k(1), "activestepporec2"
+elseif kstepporec2 == 0 && changed(kstepporec2) == 1 then
+	event "i", -1510.2, 0, 0.1, 2
+	chnset k(0), "activestepporec2"
+	if kstartmode == 0 then
+	    chnset k(1), "steppoplay"
+	endif
+endif
+
+kstepporec3 chnget "stepporec3"
+if kstepporec3 == 1 && changed(kstepporec3) == 1 then
+	event "i", 1510.3, 0, -1, 3
+	chnset k(1), "activestepporec3"
+elseif kstepporec3 == 0 && changed(kstepporec3) == 1 then
+	event "i", -1510.3, 0, 0.1, 3
+	chnset k(0), "activestepporec3"
+	if kstartmode == 0 then
+	    chnset k(1), "steppoplay"
+	endif
+endif
+
+kstepporec4 chnget "stepporec4"
+if kstepporec4 == 1 && changed(kstepporec4) == 1 then
+	event "i", 1510.4, 0, -1, 4
+	chnset k(1), "activestepporec4"
+elseif kstepporec4 == 0 && changed(kstepporec4) == 1 then
+	event "i", -1510.4, 0, 0.1, 4
+	chnset k(0), "activestepporec4"
+	if kstartmode == 0 then
+	    chnset k(1), "steppoplay"
+	endif
+endif
+
+
+;Play matrix
+
+ksteppostartmode chnget "steppostartmode";0_end recording, 1_ if ksteppoplay == 1
+ksteppoplay chnget "steppoplay"
+;printk2 ksteppoplay
+ksteppoOnPlay init 0
+if ksteppoplay == 1 && changed(ksteppoplay) == 1then 
+    event "i", 1520, 0, -1
+    ksteppoOnPlay = 1
+elseif ksteppoplay == 0 && changed(ksteppoplay) == 1 then 
+    event "i", -1520, 0, 0.1
+    ksteppoOnPlay = 0
+endif
+
+kactsteppo active k(1520)
+if changed(kactsteppo) == 1 then
+    chnset kactsteppo, "activesteppo"
+endif
+
+
+
+;initialize matrix points
+;table 249 and table 0 initialization
+index = 0
+ileng = ftlen(gistepposeqp)
+while index < ileng do
+   tablew -1, index, gistepposeqp
+   index = index + 1
+od
+
+
+;table load if current matrix is changed
+kupdtab chnget "steppotablechanged"
+if kupdtab == 1 && changed(kupdtab) == 1 then
+    event "i", 1505, 0, -1
+endif
+
+
+endin
+
+
+
+
+instr 1505;tab upd
+;print p1
+index = 0
+ileng = 30
+while index < ileng do
+    Sita sprintf "steppotableta%d", index
+    Sisa sprintf "steppotablesa%d", index
+    Sise sprintf "steppotablese%d", index
+    ita chnget Sita
+    isa chnget Sisa
+    ise chnget Sise
+    tabw_i ita, 3 * index, gistepposeqp
+    tabw_i isa, 3 * index + 1, gistepposeqp
+    tabw_i ise, 3 * index + 2, gistepposeqp
+    index = index + 1
+od
+
+chnset 0, "steppotablechanged"
+turnoff
+
+endin
+
+
+
+
+
+
+instr 1510;steppo recorder
+isteppoinput chnget "steppoInput";0_matrix, 1_loop1, 2_loop2, 3_loop3, 4_direct in 
+idecl init 0.05
+kenvdecl linsegr 0, idecl, 1, idecl, 0
+if isteppoinput == 1 then
+    ainL = gaoutMix[4] * kenvdecl
+    ainR  = gaoutMix[5] * kenvdecl
+elseif isteppoinput == 2 then
+    ainL = gaoutMix[6] * kenvdecl
+    ainR  = gaoutMix[7] * kenvdecl
+elseif isteppoinput == 3 then
+    ainL = gaoutMix[8] * kenvdecl
+    ainR  = gaoutMix[9] * kenvdecl
+elseif isteppoinput == 4 then
+    ainL = gaoutMix[10] * kenvdecl
+    ainR  = gaoutMix[11] * kenvdecl
+else
+    ainL = gaoutMix[2] * kenvdecl
+    ainR  = gaoutMix[3] * kenvdecl
+endif
+
+iftL = 200 + p4 * 2
+iftR = 201 + p4 * 2
+
+aphas line 0, gisteppomax, gisteppomax * sr
+tablew ainL, aphas, iftL
+tablew ainR, aphas, iftR
+
+;record length
+klen timeinsts
+
+kind init p4 - 1
+if release() == 1 then
+    tablew klen + idecl, kind, gisteppotime
+endif
+
+;stop if too long
+Schactive sprintf "activestepporec%d", p4
+
+if klen >= (gisteppomax - idecl) then
+    tablew klen + idecl, kind, gisteppotime
+    chnset k(0), Schactive
+    turnoff
+endif
+
+
+endin
+
+
+
+
+instr 1520;matrix player
+ksteppoplaymode chnget "steppoplaymode";0_loop, 1_oneShot
+ksteppospeedloop chnget "steppospeedloop";interger ratio
+ksteppo_sppp chnget "steppo_sppp";slider ratio
+kstepposteps chnget "steppoSteps"	
+ksteflenght chnget "steflenght";0pitch, 1tape
+
+kincr init 0
+kincr += (ksteppospeedloop * ksteppo_sppp * (gkbpm / 60)) / kr
+kindex init 0
+nartro:
+kttime tab kindex, gistepposeqp
+
+if kttime <= kincr then
+    if kttime == -1 then
+        kgoto via
+    endif
+    ksamp tab kindex + 1, gistepposeqp
+    ksemi tab kindex + 2, gistepposeqp
+    klen timeinsts
+    event "i", 1530 + 0.00001 * kttime + 0.1 * ksamp + 0.001 * ksemi + klen / 7200, 0, -1, ksamp, ksemi, ksteflenght, klen
+    kindex = (kindex < 90 ? kindex + 3 : 0)
+    kgoto nartro
+endif
+
+via:
+
+if kincr >= kstepposteps then
+   if ksteppoplaymode < 1 then
+       event "i", 1520, 0, -1
+   endif
+   turnoff
+endif
+
+endin
+
+
+instr 1530;steppo sample play
+;p4 sample
+;p5 transpose
+;p6 original length or proportional to transposition
+irateo = semitone(p5)
+
+itime table p4 - 1, gisteppotime
+
+if p6 == 0 then ;pitch only
+    aphas line 0, itime, itime * sr
+    koff line 0, itime + 0.1, 1.0001
+    aout_L table aphas, 200 + p4 * 2
+    aout_R table aphas, 201 + p4 * 2
+    ;pitch shifter
+    fftinL     pvsanal aout_L, gifftsize, gioverlap, giwinsize, giwinshape
+    fftblurL   pvscale fftinL, irateo
+    aoutL      pvsynth fftblurL
+    fftinR     pvsanal aout_R, gifftsize, gioverlap, giwinsize, giwinshape
+    fftblurR   pvscale fftinR, irateo
+    aoutR      pvsynth fftblurR
+else
+    aphas line 0, itime / irateo, itime * sr
+    koff line 0, itime / irateo + 0.1, 1.0001
+    aoutL table aphas, 200 + p4 * 2
+    aoutR table aphas, 201 + p4 * 2
+endif
+
+gaoutMix[10] = gaoutMix[10] + aoutL
+gaoutMix[11] = gaoutMix[11] + aoutR
+
+
+if koff > 1 then
+    turnoff
+endif
+
+endin
+
+
+
+
+
+
+instr 1560;steppo return to matrix in
+kloop_in_ma_ chnget "loop_in_masteppo"
+kloop_in_ma port kloop_in_ma_ * kloop_in_ma_* 8, giport
+galoop_in_ma AtanLimit galoop_in_ma + (gaoutMix[10]  + gaoutMix[11] ) * kloop_in_ma * kloop_in_ma
+endin
+
 
 instr 2000;global mixer
 ;output 
@@ -3176,10 +3958,11 @@ chnset 0.5, "mix_ma"
 chnset 0.5, "mix_l1"
 chnset 0.5, "mix_l2"
 chnset 0.5, "mix_l3"
-chnset 0.5, "mix_l4"
+chnset 0.5, "mix_st"
 chnset 0.5, "mix_f1"
 chnset 0.5, "mix_f2"
 chnset 0.5, "mix_f3"
+chnset 0.5, "mix_mas"
 
 kmix_in_ chnget "mix_in"
 kmix_in port kmix_in_ * kmix_in_ * 4, giport
@@ -3191,9 +3974,8 @@ kmix_l2_ chnget "mix_l2"
 kmix_l2 port kmix_l2_ * kmix_l2_ * 4, giport
 kmix_l3_ chnget "mix_l3"
 kmix_l3 port kmix_l3_ * kmix_l3_ * 4, giport
-kmix_l4_ chnget "mix_l4"
+kmix_l4_ chnget "mix_st"
 kmix_l4 port kmix_l4_ * kmix_l4_ * 4, giport
-
 kmix_f1_ chnget "mix_f1"
 kmix_f1 port kmix_f1_ * kmix_f1_ * 4, giport
 kmix_f2_ chnget "mix_f2"
@@ -3201,23 +3983,26 @@ kmix_f2 port kmix_f2_ * kmix_f2_ * 4, giport
 kmix_f3_ chnget "mix_f3"
 kmix_f3 port kmix_f3_ * kmix_f3_ * 4, giport
 
+kmix_mas_ chnget "mix_mas"
+kmix_mas port kmix_mas_ * kmix_mas_ * 4, giport
+
 galtot = gaoutMix[0] * kmix_in  + gaoutMix[2] * kmix_ma + gaoutMix[4] * kmix_l1 + gaoutMix[6] * kmix_l2 + gaoutMix[8] * kmix_l3 + gaoutMix[10] * kmix_l4 + gaoutMix[12] * kmix_f1 + gaoutMix[13] * kmix_f2 + gaoutMix[14] * kmix_f3
 
 gartot = gaoutMix[1] * kmix_in  + gaoutMix[3] * kmix_ma + gaoutMix[5] * kmix_l1 + gaoutMix[7] * kmix_l2 + gaoutMix[9] * kmix_l3 + gaoutMix[11] * kmix_l4 + gaoutMix[12] * kmix_f1 + gaoutMix[13] * kmix_f2 + gaoutMix[14] * kmix_f3
 
-outs galtot, gartot 
+outs galtot * kmix_mas, gartot  * kmix_mas
 
 ;Update vumeter
 kupdate metro 1 / 0.7
-kmatrixoutv max_k gaoutMix[2] + gaoutMix[3], kupdate, 1
-kfreeze1outv max_k gaoutMix[12] * 1.41421, kupdate, 1
-kfreeze2outv max_k gaoutMix[12] * 1.41421, kupdate, 1
-kfreeze3outv max_k gaoutMix[12] * 1.41421, kupdate, 1
-kloop1outv max_k gaoutMix[4] + gaoutMix[5], kupdate, 1
-kloop2outv max_k gaoutMix[6] + gaoutMix[7], kupdate, 1
-kloop3outv max_k gaoutMix[8] + gaoutMix[9], kupdate, 1
-kloop4outv max_k gaoutMix[10] + gaoutMix[11], kupdate, 1
-ktotaloutv max_k galtot + gartot , kupdate, 1
+kmatrixoutv max_k gaoutMix[2] + gaoutMix[3]  * kmix_ma, kupdate, 1
+kfreeze1outv max_k gaoutMix[12] * 1.41421 * kmix_f1, kupdate, 1
+kfreeze2outv max_k gaoutMix[13] * 1.41421 * kmix_f2, kupdate, 1
+kfreeze3outv max_k gaoutMix[14] * 1.41421  * kmix_f3, kupdate, 1
+kloop1outv max_k gaoutMix[4] + gaoutMix[5] * kmix_l1, kupdate, 1
+kloop2outv max_k gaoutMix[6] + gaoutMix[7] * kmix_l2, kupdate, 1
+kloop3outv max_k gaoutMix[8] + gaoutMix[9] * kmix_l3, kupdate, 1
+kloop4outv max_k gaoutMix[10] + gaoutMix[11] * kmix_l4, kupdate, 1
+ktotaloutv max_k galtot + gartot * kmix_mas, kupdate, 1
 
 kinstmonitor init 1000
 kch active kinstmonitor
@@ -3231,7 +4016,7 @@ if kupdate == 1 then
     chnset kloop1outv, "loop1outv"
     chnset kloop2outv, "loop2outv"
     chnset kloop3outv, "loop3outv"
-    chnset kloop4outv, "loop4outv"
+    chnset kloop4outv, "steppooutv"
     ;number of active chains
     chnset kch, "upch"
 endif

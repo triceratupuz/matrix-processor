@@ -7,8 +7,6 @@
 <p>This is a multieffect processor created for Csound For Android.<br>
 The GUI is made with Html and Javascript. Midi messages are received through web midi api in the GUI code.</p>
 <br>
-Developed by <a href="http://triceratupuz.altervista.org/" target="_blank">Triceratupuz Lab</a><br>
-
 <h2 id="index">Index</h2>
 <ul>
 <li><a href="#beforeusing">Before using</a></li>
@@ -17,6 +15,9 @@ Developed by <a href="http://triceratupuz.altervista.org/" target="_blank">Trice
 <li><a href="#midi">Midi Page</a></li>
 <li><a href="#trackpad">Trackpad page</a></li>
 <li><a href="#looper">Looper Page</a></li>
+<li><a href="#steppo">Steppo Page</a></li>
+<li><a href="#mixer">Mixerout Page</a></li>
+<li><a href="#credits">Credits</a></li>
 </ul>
 
 <h3 id="beforeusing">Before Using</h3>
@@ -42,7 +43,7 @@ Tails shows how many presets are running (in case of longer tail times).</li>
 <li>Left numbered buttons (0-9) are to select presets number.</li>
 <li>Save button save the current matrix preset in the bank/preset selected.</li>
 <li>Load button load the matrix preset selected.</li>
-<li>matrix, midi, tpad and looper buttons change visible page.</li>
+<li>matrix, midi, tpad, looper, steppo and mixerout buttons change visible page.</li>
 </ul>
 <a href="#index">Back to index</a>
 
@@ -72,7 +73,7 @@ In this page effects are selected, setted and connected. Each column represents 
 </ul>
 The rest of the page has:
 <ul>
-<li>list of midi controls (program chenges and Control chenges) hardcoded in the program</li>
+<li>list of midi controls (Program Changes and Control Changes) hardcoded in the program</li>
 <li>a midi monitor that displays incoming midi messages</li>
 </ul>
 <a href="#index">Back to index</a>
@@ -89,7 +90,7 @@ The rest of the page has:
 
 <h3 id="looper">Looper Page</h3>
 <img src="img/loopers.jpg" style="width:50%;height:50%;border:0;"><br>
-In this page there are 4 loopers, 3 freezers and the output mixer<br>
+In this page there are 3 loopers and 3 freezers<br>
 <h4>Loopers</h4>
 <ul>
 <li>looper can be: OFF (completely deactivated), man (can record play using the Play/rec button), 
@@ -104,7 +105,7 @@ and stops recoding/loop after the time selected)</li>
 (seconds or beats relative to BpM set in the Header)</li>
 <li>T= buttons is to copy the duration of loop from the other loopers</li>
 <li>1 dropdown menu select the speed of the loop</li>
-<li>the horizontal slider is another way to change the speed of the loop>
+<li>the horizontal slider is another way to change the speed of the loop</li>
 <li>to 1 button reset the slider to change de speed</li>
 <li>fPitch button preserve the original pitch regardless the speed changes in the loop</li>
 <li>reduce/amplify dropdown control if the rep slider is used to decrease or increase the loop volume at each repeat</li>
@@ -118,13 +119,61 @@ used to modulate loop speed/pitch.</li>
 
 <h4>Freez(ers)</h4>
 <ul>
-<li>dropdounmenu select the source signal to be freezed</li>
+<li>drop down menu select the source signal to be freezed</li>
 <li>Rise Time set the fade in/fade out time for the freezed sounds</li>
 <li>to matrix silder send the output of the looper to the input of the matrix</li> 
 </ul>
-<h4>Mixer</h4>
-Mix the volume of the various parts.
+<a href="#index">Back to index</a>
+
+<h3 id="steppo">Steppo Page</h3>
+<img src="img/steppo.jpg" style="width:50%;height:50%;border:0;"><br>
+In this page is for the steppo sampler sequencer. The idea is of <a href="http://www.perboysen.com">Per Boysen</a>, could be found <a href="http://www.perboysen.com/steppophonic-looperformer-please-steal-this/">here</a>.
+It is basically a sampler, the samples are played in a grid where x is the time at start of sample and y is transposition in semitones (from +12 on top to -12 at bottom).<br>
+Top menu is divided in 3 parts:
+<ul>
+<li>Grid to manage grid sequencer 
+<li>Rec to record the samples
+<li>Play to play the samples on the grid sequencers
+</ul>
+Here the explaination of the controls:
+<ul>
+<li>More steps increase the length of the grid</li>
+<li>Less steps decrease the length of the grid</li>
+<li>time Q (time unQ) quantize/unquantize time when adding points on the grid</li>
+<li>pitch Q (pitch unQ) quantize/unquantize semitones when adding points on the grid</li>
+<li>Sample X dropdown select the sample to de added/removed on the grid</li> 
+<li>from xxxx dropdown select the audio source to be sampled</li>
+<li>Sample x (Rsample x) buttons record/stop recording of the sample. When sample is empty button is grey with black text;
+when is recording Button change colour (different for each sample) text is black (Rsample x); when sample is stored button is grey 
+and text is colored (different for each sample)</li>
+<li>Play (>>>>) button start/stop the reproduction on the grid</li>
+<li>Loop/One Shot dropdown, if the grid is played continously in loop or is stopped at the end (length is the number of steps visible)</li>
+<li>after rec/free start if after rec, when a sample record is terminated start the grid sequencer, otherwise use the Play button to start</li>
+<li>dropdown with number/fractions: change the speed of grid reproduction relative to master BpM (see header)</li>
+<li>horizontal slider to continously change the speed of grid reproduction relative to master BpM and dropdown menu above(see header)</li>
+<li>to 1 button reset the speed slider</li>
+<li>Tape/Pitch button toggle the sample play mode. Tape change pitch and speed of the sample played (higher the pitch higher the speed),
+Pitch change only the pitch of the sample played (speed of the sample is unalterated)</li>
+<li>to matrix silder send the output of the looper to the input of the matrix</li>  
+<li>to add points on the grid touch/click where it must be placed, to remove click on a point</li> 
+</ul>
+<a href="#index">Back to index</a>
+
+<h3 id="mixer">Mixerout Page</h3>
+<img src="img/mixer.jpg" style="width:50%;height:50%;border:0;"><br>
+The vertical sliders set the volume, the name of the slider change colour like a vu meter<br>
+<a href="#index">Back to index</a>
+
+<h3 id="credits">Credits</h3>
+Developed by <a href="http://triceratupuz.altervista.org/" target="_blank">Triceratupuz Lab</a>, some code/ideas taken from the following:
+<ul>
+<li><a href="http://iainmccurdy.org/"> Iain McCurdy</a>: the huge collection of csound examples  
+<li><a href="http://oeyvind.teks.no">Oeyvind Brandtsegg</a>: the code of the compressor effect
+<li><a href="http://www.perboysen.com">Per Boysen</a>: for having and sharing the idea of the <a href="http://www.perboysen.com/steppophonic-looperformer-please-steal-this/">Steppophonic Looperformer</a>
+</ul>
+
 <br><br>
+
 <a href="#index">Back to index</a>
 </body>
 </html>
