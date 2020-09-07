@@ -1,8 +1,8 @@
 
 
 
-opcode DelaySampl, aa, aakkkkki
-ainL, ainR, kinvol, ktime, kfeedback, kspeed, kreset, imaxtime  xin
+opcode DelaySampl, aa, aakkkkkki
+ainL, ainR, kinvol, ktime, kfeedback, kspeed, kreset, kpause, imaxtime  xin
 ;setksmps 1
 ;basic buffer with feedback, no time modulation
 ;inputs
@@ -27,21 +27,46 @@ else
 	asyncin = 0
 endif
 
+
 ;/resetting pointer
 ;buffer indexing
-aphase, asyncout syncphasor kspeed / ktime, asyncin
+
+koffset init 0
+
+
+
+restart:
+
+aphase, asyncout syncphasor kspeed / ktime, asyncin, i(koffset)
+
+;end pause
+if kpause == 0 && changed(kpause) == 1 then
+    asyncin = 1
+     kenv_ = 1
+     reinit restart
+endif
+
+;begin pause
+aoffset init 0
+if kpause == 1 && changed(kpause) == 1 then
+    koffset = k(aphase)
+    kenv_ = 0
+endif
+
 apointw = aphase * ktime * sr
 ;/buffer indexing
 
+kenv_ init 1
+kenv port kenv_, 0.02
 
 ;buffer reading -> writing
 afrom_ibufL tablei apointw, ibufL
 afrom_ibufR tablei apointw, ibufR
 ;writing
-tablew afrom_ibufL * kfeedback + ainL * kinvol, apointw, ibufL
-tablew afrom_ibufR * kfeedback + ainR * kinvol, apointw, ibufR
+tablew afrom_ibufL * kfeedback + ainL * kinvol * kenv_, apointw, ibufL
+tablew afrom_ibufR * kfeedback + ainR * kinvol * kenv_, apointw, ibufR
 ;/buffer reading -> writing
 
-xout afrom_ibufL * kfeedback, afrom_ibufR * kfeedback
+xout afrom_ibufL * kfeedback * kenv, afrom_ibufR * kfeedback * kenv
 endop
 

@@ -283,7 +283,7 @@ var effectsData = [[0, "nothing", ["", 0], ["", 0], ["", 0], ["", 0]],
     [83, "green od", ["dist", 0], ["tone", 0], ["", 0], ["", 0]],
     [8, "slow attack", ["threshold", 0], ["time", 0], ["", 0], ["", 0]],
     [9, "compressor", ["gain", 0], ["threshold", 0], ["ratio", 0], ["", 0]],
-    [70, "gate", ["threshold", 0], ["lop-hip", 0], ["react", 0], ["", 0]],
+    [70, "gate", ["threshold", 0], ["lop-hip", 0], ["attack", 0], ["release", 0]],
     [71, "shortEnv", ["threshold", 0], ["attack", 0], ["sustain", 0], ["release", 0]],
     [72, "autofreeze", ["threshold", 0], ["risetime", 0], ["modulation", 0], ["trig dly", 0]],
     [10, "lowpass", ["freq", 0], ["Q", 0], ["volume", 0], ["", 0]],
@@ -378,18 +378,21 @@ var mixerdefs = [["mix_ma", "matrixoutv", "Matrix", 100],
 
 
 //midi configuration - changed to PC 192 instead of CC 176
-var fixedmididefs = [["freez1", 114, 192, "Freeze 1"],
-                ["freez2", 115, 192, "Freeze 2"],
-                ["freez3", 116, 192, "Freeze 3"],
-                ["looprec1", 110, 192, "Looper 1"],
+var fixedmididefs = [["looprec1", 110, 192, "Looper 1"],
+                ["looppause1", 115, 192, "Looper 1 pause"],
                 ["looprec2", 111, 192, "Looper 2"],
+                ["looppause2", 116, 192, "Looper 2 pause"],
                 ["looprec3", 112, 192, "Looper 3"],
-                ["stepporec1", 105, 192, "Steppo Sample 1"],
-                ["stepporec2", 106, 192, "Steppo Sample 2"],
-                ["stepporec3", 107, 192, "Steppo Sample 3"],
-                ["stepporec4", 108, 192, "Steppo Sample 4"],
-                ["steppoplay", 109, 192, "Steppo Play"],                                
-                ["tap", 117, 192, "Tap Tempo"]];
+                ["looppause3", 117, 192, "Looper 3 pause"],
+                ["freez1", 120, 192, "Freeze 1"],
+                ["freez2", 121, 192, "Freeze 2"],
+                ["freez3", 122, 192, "Freeze 3"],
+                ["steppoplay", 100, 192, "Steppo Play"],                                
+                ["stepporec1", 101, 192, "Steppo Sample 1"],
+                ["stepporec2", 102, 192, "Steppo Sample 2"],
+                ["stepporec3", 103, 192, "Steppo Sample 3"],
+                ["stepporec4", 104, 192, "Steppo Sample 4"],
+                ["tap", 127, 192, "Tap Tempo"]];
 
 
 
@@ -502,6 +505,8 @@ function loaderMidi(message) {
             var idmid = fixedmididefs[readmidit][0];
             if (idmid.search("looprec") >= 0) {
                 loopPlayRec(idmid);
+            } else if (idmid.search("looppause") >= 0) {
+                loopPause(idmid);
             } else if (idmid.search("freez") >= 0) {
                 freezPlayRec(idmid);
             } else if (idmid.search("tap") >= 0) {
@@ -780,9 +785,37 @@ function delayTimeCopy(dest, source) {
 /*copy delay time from other delay*/
 	var destCh = "ol_ti" + dest.toString();
 	var sourceCh = "ol_ti" + source.toString();
+              //get unit measure 0 sec, 1 beat
+              var umdestid = "outtimeum"+ dest.toString();
+              var umeldest = document.getElementById(umdestid);
+              var umdest = umeldest.options[umeldest.selectedIndex].value;
+
+              var umsourceid =  "outtimeum"+ source.toString();
+              var umelsource = document.getElementById(umsourceid);
+              var umsource = umelsource.options[umelsource.selectedIndex].value;
+
+              //get bpm
+              var bpmel = document.getElementById("bpm");
+              var bpm = parseFloat(bpmel.value);
+
+              //old
 	var valu = csoundApp.getControlChannel(sourceCh);
 	csoundApp.setControlChannel(destCh, valu);
-	document.getElementById(destCh).value = valu.toString();
+
+              //convert for  display
+              if (umdest == 0) {//seconds
+	     document.getElementById(destCh).value = valu.toString();
+              } else {//beats
+                   if (umsource == 1) {
+                       document.getElementById(destCh).value = document.getElementById(sourceCh).value
+                   } else {
+
+                      //get bpm
+                      var bpmel = document.getElementById("bpm");
+                      var bpm = parseFloat(bpmel.value);
+                      document.getElementById(destCh).value = valu * bpm / 60
+                  }
+              }
 }
 
 
@@ -791,6 +824,17 @@ function loopPlayRec(id) {
  /* loopers activation csound only  updates
 called by button press */
               activator(id);
+}
+
+
+function loopPause(id) {
+ /* pause loopers */
+      var valu = csoundApp.getControlChannel(id);
+        if (valu == 0.0) {
+            csoundApp.setControlChannel(id, 1.0);
+        } else {
+            csoundApp.setControlChannel(id, 0.0);
+        }
 }
 
 
@@ -816,6 +860,21 @@ called by global timer*/
          }
 }
 
+
+function pauseBut(num){
+    /*pause indication on button*/
+    var id =  "looppause" + num.toString();
+    var el = document.getElementById(id);
+    var back = el.style.background;
+    var fromcha = csoundApp.getControlChannel(id);
+    if (fromcha == 1 && el.value == "Pause") {
+        el.value = "Paused";
+        el.style.background="#ff0000";
+    } else if  (fromcha == 0 && el.value == "Paused") {
+        el.value = "Pause";
+        el.style.background="#bbbbbb";
+    }
+}
 
 
 function freezPlayRec(id)  {
@@ -1184,6 +1243,7 @@ function myTimed() {
     // update looper button aspect
     for (nnn =1; nnn <= 3; nnn++) {
          recButUpdateT(nnn);
+         pauseBut(nnn);
     }
     
     // update vumeter
@@ -1220,12 +1280,16 @@ function vuMeter(id) {
     var matvol = csoundApp.getControlChannel(id);
     var matvolvu = document.getElementById(id);
     if (matvol > 0.99) {
-        matvolvu.style.color = "#CC0000";
-    } else if (matvol > 0.7) {
-        matvolvu.style.color = "#FFA500";
+        matvolvu.style.color = "#CC0000";//-0.1 dbfs
+    } else if (matvol > 0.89) {
+        matvolvu.style.color = "#FFA500";//-1 dbfs
     } else {
-        matvolvu.style.color = "#00CC00";
-    }
+        var gr = Math.floor(255 * matvol).toString(16);
+        if (gr.length == 1){
+            gr = "0" + gr;
+        }
+        matvolvu.style.color = "#00"+gr+"00";
+    } 
 }
 
 
@@ -2161,6 +2225,9 @@ for (lop =1; lop <= loopersqty; lop++) {
 
     document.write('<div class="time">');
     document.write('<input type="button" class= "footdh" value="Play" id="looprec' + lop + '" onclick="loopPlayRec(id)">');
+
+    document.write('<input type="button" class= "footdh" value="Pause" id="looppause' + lop + '" onclick="loopPause(id)">');
+
     document.write('<input type="button" class= "foothw" value="P 0" id="resetp' + lop+ '" onclick="activator(id)">');
     document.write('<input type="button" class= "foothw" value="Kill" id="mute' + lop+ '" onclick="loopMuter(id)">');
     //matrix input
@@ -2170,7 +2237,7 @@ for (lop =1; lop <= loopersqty; lop++) {
         document.write('                                      <option value="'+ lopc + '">from loop' + lopc +'</option>');
     }
     document.write('                                      <option value="5">direct in</option>');
-    document.write('</select><br>');
+    document.write('</select><br><br><br>');
     document.write('</div>');
 
     document.write('<div class="time">');
@@ -3373,6 +3440,7 @@ $INMIXT
 $PARAMTNP(1)
 $PARAMTNP(2)
 $PARAMTP(3'giport)
+$PARAMTP(4'giport)
 $EFF_GATE
 $OUTMIXT
 endin
@@ -3611,11 +3679,6 @@ endin
 
 
 
-
-
-
-
-
 instr 1100;pvs in for freezers
 ;audio input
 kinput chnget "freezinput"
@@ -3751,7 +3814,7 @@ ksteppoplay chnget "steppoplay"
 ;printk2 ksteppoplay
 ksteppoOnPlay init 0
 if ksteppoplay == 1 && changed(ksteppoplay) == 1then 
-    event "i", 1520, 0, -1
+    event "i", 1520, 0, -1, 0
     ksteppoOnPlay = 1
 elseif ksteppoplay == 0 && changed(ksteppoplay) == 1 then 
     event "i", -1520, 0, 0.1
@@ -3878,14 +3941,16 @@ kindex init 0
 nartro:
 kttime tab kindex, gistepposeqp
 
+kserial init p4
+
 if kttime <= kincr then
     if kttime == -1 then
         kgoto via
     endif
     ksamp tab kindex + 1, gistepposeqp
     ksemi tab kindex + 2, gistepposeqp
-    klen timeinsts
-    event "i", 1530 + 0.00001 * kttime + 0.1 * ksamp + 0.001 * ksemi + klen / 7200, 0, -1, ksamp, ksemi, ksteflenght, klen
+    kserial = (kserial < 300 ? kserial + 1 : 0)
+    event "i", 1530.0001 + 0.001 * kserial, 0, -1, ksamp, ksemi, ksteflenght
     kindex = (kindex < 90 ? kindex + 3 : 0)
     kgoto nartro
 endif
@@ -3894,7 +3959,7 @@ via:
 
 if kincr >= kstepposteps then
    if ksteppoplaymode < 1 then
-       event "i", 1520, 0, -1
+       event "i", 1520, 0, -1, kserial
    endif
    turnoff
 endif
@@ -3902,7 +3967,9 @@ endif
 endin
 
 
+
 instr 1530;steppo sample play
+print p1
 ;p4 sample
 ;p5 transpose
 ;p6 original length or proportional to transposition
@@ -3931,7 +3998,6 @@ endif
 
 gaoutMix[10] = gaoutMix[10] + aoutL
 gaoutMix[11] = gaoutMix[11] + aoutR
-
 
 if koff > 1 then
     turnoff

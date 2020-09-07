@@ -14,8 +14,12 @@ kol_ti chnget Sol_ti
 Sol_re sprintf  "ol_re%d", p4
 chnset 1.0, Sol_re
 
+Slooppause sprintf "looppause%d", p4
+chnset 1.0, Sol_re
+
 Sol_repamp sprintf  "repamp%d", p4
-chnset 0, Sol_repamp
+chnset 0, Slooppause
+klooppause chnget Slooppause
 
 Sspeed sprintf  "speedloop%d", p4
 chnset 1, Sspeed
@@ -222,7 +226,7 @@ kfeedback = kol_re * kmuted
 
 kspeedt = kspeed * kspeedy + kspeed_mod
 kol_in port kol_in_, giport
-aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kfeedback, kspeedt, kreset, gimaxDlyTime
+aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kfeedback, kspeedt, kreset,  klooppause,gimaxDlyTime
 
 ;chnset 0, "ol_fixp1"
 Sfixp sprintf  "ol_fixp%d", p4

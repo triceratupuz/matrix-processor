@@ -6,34 +6,38 @@
 ;kpar3 areola H PARAMTNP(3)
 ;kpar4 areola W PARAMTNP(4)
 
+iftl init 1024*2
+
 reset:
-kcrostee = 20 + round(80 * kpar_2)
+
+kcrostee = 20 + round(iftl * 0.1 * kpar_2)
 icrostee = i(kcrostee)
-kareolaH = 0.7 * kpar_3
+kareolaH = 0.9 * kpar_3
 iareolaH = i(kareolaH)
-kareolaW = 20 + round(380 * kpar_4)
+kareolaW = 20 + round(iftl * 0.4 * kpar_4)
 iareolaW = i(kareolaW)
 
-ivc ftgentmp 0, 123, 1024, 7, -1, 512, 0, 512, 1
-ivd ftgentmp 0, 123, 1024, 7, -0.55, 512 - icrostee, -0.45, icrostee, 0, icrostee, iareolaH * 0.7, iareolaW, iareolaH, 512 - icrostee - iareolaW, 1
-ire ftgentmp 0, 123, 1024, 7, 0, 512, 0, 512, 0;result of ftmorph
+ivc ftgentmp 0, 123, iftl, 7, -1, iftl * 0.5, 0, iftl * 0.5, 1
+ivd ftgentmp 0, 123, iftl, 7, -0.75 + i(kpar_1) * 0.4, iftl * 0.5 - icrostee, -0.2 - 0.15 * i(kpar_1), icrostee, 0, icrostee, iareolaH, iareolaW, iareolaH, iftl * 0.5 - icrostee - iareolaW, 1
+ire ftgentmp 0, 123, iftl, 7, 0, iftl * 0.5, 0, iftl * 0.5, 0;result of ftmorph
+
+rireturn
 iftfn ftgentmp 0, 123, 2, -2, ivc, ivd;tables for morphing
 ftmorf kpar1, iftfn, ire
-rireturn
 
-ktrig changed kpar_2, kpar_3, kpar_4
+ktrig changed kpar_1, kpar_2, kpar_3, kpar_4
 if ktrig == 1 then
 	reinit reset
 endif
 
-ain butlp ain, 5000
-ain buthp ain, 70
+ain butlp ain * (1 - 0.2 * kpar1), 3500
+ain buthp ain, 120
 
 
 adist TransferFun ain, ire
 aout_ AtanLimit adist
 
-aout_ butlp aout_, 7500
+aout_ butlp aout_, 6000
 
 aout dcblock2 aout_
 
