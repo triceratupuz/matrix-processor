@@ -223,6 +223,15 @@ input[type=button].footdh {
                font-size:2.2em;
 }
 
+input[type=button].multiloop {
+               width:32%;
+	font-size:1em;
+	//padding: 0.5em;
+	border-style:solid;
+              border-width: 1px;
+              border-color:#000000;
+	background-color: #bbbbbb;
+}
 
 #pad {
 	border:1px solid #111111;
@@ -298,6 +307,7 @@ var effectsData = [[0, "nothing", ["", 0], ["", 0], ["", 0], ["", 0]],
     [20, "tremolo", ["freq", 0], ["volume", 0], ["square", 0], ["dry-wet", 0]],
     [60, "tremoloBpm", ["mult", 1], ["square", 0], ["dry-wet", 0], ["", 0]],
     [56, "harm trem", ["speed", 0], ["freq", 0], ["dry-wet", 0], ["", 0]],
+    [57, "tremoloEnv", ["at_min", 0], ["at_max", 0], ["square", 0], ["dry-wet", 0]],
     [21, "flanger", ["freq", 0], ["delay", 0], ["feedback", 0], ["dry-wet", 0]],
     [22, "phaser", ["lfo", 0], ["frequency", 0], ["feedback", 0], ["dry-wet", 0]],
     [23, "chorus", ["delay", 0], ["frequency", 0], ["feedback", 0], ["dry-wet", 0]],
@@ -307,6 +317,7 @@ var effectsData = [[0, "nothing", ["", 0], ["", 0], ["", 0], ["", 0]],
     [27, "ring mod", ["freq", 0], ["shape", 0], ["dry-wet", 0], ["", 0]],
     [28, "freq mod", ["car shift", 0], ["mod shift", 0], ["spread", 0], ["dry-wet", 0]],
     [29, "hilbert", ["freq", 0], ["min shift", 0], ["max shift", 0], ["direction", 0]],
+    [39, "dynadly", ["sens", 0], ["time", 0], ["invert", 0], ["dry-wet", 0]],
     [30, "delay", ["time", 0], ["feedback", 0], ["dry-wet", 0], ["", 0]],
     [61, "delayBpm", ["mult", 1], ["feedback", 0], ["dry-wet", 0], ["", 0]],
     [32, "reverseDelay", ["time", 0], ["feedback", 0], ["dry-wet", 0], ["", 0]],
@@ -384,6 +395,7 @@ var fixedmididefs = [["looprec1", 110, 192, "Looper 1"],
                 ["looppause2", 116, 192, "Looper 2 pause"],
                 ["looprec3", 112, 192, "Looper 3"],
                 ["looppause3", 117, 192, "Looper 3 pause"],
+                ["multiloop", 119, 192, "Multiloop activator"],
                 ["freez1", 120, 192, "Freeze 1"],
                 ["freez2", 121, 192, "Freeze 2"],
                 ["freez3", 122, 192, "Freeze 3"],
@@ -515,6 +527,8 @@ function loaderMidi(message) {
                steppoRec(idmid);
             } else if (idmid.search("steppoplay") >= 0){
                 steppoPlay(idmid);
+            } else if (idmid.search("multiloop") >= 0){
+                multiloop(idmid);
             }
         }
     }
@@ -818,6 +832,32 @@ function delayTimeCopy(dest, source) {
               }
 }
 
+function delayTimeChangeQ(incr, dest) {
+     /* increase, decrease time in steps based on global bpm*/
+    //get bpm
+    var bpmel = document.getElementById("bpm");
+    var bpm = parseFloat(bpmel.value);
+    var inrsecs = parseFloat(incr) * 60.0 / bpm;
+    
+    var destCh = "ol_ti" + dest.toString();
+    //get value
+    var umdestid = "outtimeum"+ dest.toString();
+    var umeldest = document.getElementById(umdestid);
+    var umdest = umeldest.options[umeldest.selectedIndex].value;
+    
+    // update csound channel
+    csoundApp.setControlChannel("timechange" + dest.toString(), parseFloat(1.0));
+    // update csound time
+    csoundApp.setControlChannel(destCh, parseFloat(document.getElementById(destCh).value) + inrsecs);
+
+    // update Gui
+    if (umdest == 0) {
+        document.getElementById(destCh).value = (parseFloat(document.getElementById(destCh).value) + inrsecs).toString();
+    } else {
+        document.getElementById(destCh).value = (parseFloat(document.getElementById(destCh).value) + parseFloat(incr)).toString();
+    }
+    
+}
 
 
 function loopPlayRec(id) {
@@ -2253,20 +2293,29 @@ for (lop =1; lop <= loopersqty; lop++) {
             document.write('<input type="button" value="T=' + con + '" id="ol_ticop' + con + '_' + lop + '" onclick="delayTimeCopy(' + lop + ', '  + con + ')">');
         }
     }
-
+    
+    document.write('<input type="button" value="-0.5" id="ktimechange" onclick="delayTimeChangeQ(-0.5, ' + lop + ')">');
+    document.write('<input type="button" value="+0.5" id="ktimechange" onclick="delayTimeChangeQ(0.5, ' + lop + ')">');
+    
     document.write('<select class= "foot" id="speedloop'+lop+'" onchange="selectDo(id)">');
+    document.write('                                      <option value="0.2">1/5</option>');
     document.write('                                      <option value="0.25">1/4</option>');
     document.write('                                      <option value="0.3333333333">1/3</option>');
     document.write('                                      <option value="0.5">1/2</option>');
     document.write('                                      <option value="1" selected>1</option>');
     document.write('                                      <option value="2">2</option>');
     document.write('                                      <option value="3">3</option>');
+    document.write('                                      <option value="4">4</option>');
+    document.write('                                      <option value="5">5</option>');
+    document.write('                                      <option value="-0.2">-1/5</option>');    
     document.write('                                      <option value="-0.25">-1/4</option>');
     document.write('                                      <option value="-0.3333333333">-1/3</option>');
     document.write('                                      <option value="-0.5">-1/2</option>');
     document.write('                                      <option value="-1">-1</option>');
     document.write('                                      <option value="-2">-2</option>');
     document.write('                                      <option value="-3">-3</option>');
+    document.write('                                      <option value="-4">-4</option>');
+    document.write('                                      <option value="-5">-5</option>');
     document.write('</select><br>');
 
     document.write('<input type="range" class="" min=0 max=1 value=0.5 step=0.001 id="ol_sppp' +lop+ '" oninput="sliderDo(id, value)">');
@@ -2312,7 +2361,48 @@ for (lop =1; lop <= loopersqty; lop++) {
     //document.write('<br>');
 }
 
+
 </script>
+
+
+<script>
+//multiple loopers activation functions
+var looparm = [0, 0, 0]
+
+function multiloop(id){
+	//activate and deactivate loopers selected with checkboxes
+	for (var cc = 0; cc < looparm.length; cc++) {
+		if(looparm[cc] ==1) {
+			loopPlayRec("looprec" + (cc+1).toString());
+		}
+	}
+}
+
+function loopselect(id){
+	//select loop to be activated
+	var address = parseInt(id.replace("arm", "").replace("l",""));
+	looparm[address - 1] = (looparm[address - 1] + 1) % 2;
+	var el = document.getElementById(id);
+	if (looparm[address - 1] == 1) {
+		el.style.background = '#dd0000';
+	} else {
+		el.style.background = '#bbbbbb';
+	}
+}
+
+</script>
+
+<div style="clear:both;"></div>
+<br>
+<div>
+<input type="button" class= "footdh" value="Multiloop actuator" id="multiloop" onclick="multiloop(id)">
+<br>
+<input type="button" class="multiloop" value="Loop1" id="l1arm" onclick="loopselect(id)">
+<input type="button" class="multiloop" value="Loop2" id="l2arm" onclick="loopselect(id)">
+<input type="button" class="multiloop" value="Loop3" id="l3arm" onclick="loopselect(id)">
+</div>
+
+
 
 <div style="clear:both;"></div>
 <br>
@@ -2415,6 +2505,7 @@ gScurDir init "$GSCURDIR"
 #include "eff_delaycrap.txt"
 #include "eff_delayreverse.txt"
 #include "eff_distortion.txt"
+#include "eff_dynadly.txt"
 #include "eff_envlowpass.txt"
 #include "eff_flanger.txt"
 #include "eff_fmer.txt"
@@ -2450,6 +2541,7 @@ gScurDir init "$GSCURDIR"
 #include "eff_swedesaw.txt"
 #include "eff_tremolo.txt"
 #include "eff_tremolobpm.txt"
+#include "eff_tremoloenv.txt"
 #include "eff_vocalfilter.txt"
 #include "eff_wha.txt"
 
@@ -3290,6 +3382,18 @@ $OUTMIXT
 endin
 
 
+
+instr 139;dynadly
+$INMIXT
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
+$EFF_DYNADLY
+$OUTMIXT
+endin
+
+
 instr 140; reverb
 $INMIXT
 $PARAMTP(1'giport)
@@ -3409,6 +3513,17 @@ $PARAMTP(1'giport)
 $PARAMTP(2'giport)
 $PARAMTP(3'giport)
 $EFF_HARMTREM
+$OUTMIXT
+endin
+
+
+instr 157; envelope tremolo
+$INMIXT
+$PARAMTP(1'giport)
+$PARAMTP(2'giport)
+$PARAMTP(3'giport)
+$PARAMTP(4'giport)
+$EFF_TREMOLO_ENV
 $OUTMIXT
 endin
 

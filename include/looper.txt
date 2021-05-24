@@ -82,6 +82,9 @@ ktime times
 kstarttime init 0
 kactiv_mode init 0
 
+;extend reduce time
+Stimechange sprintf  "timechange%d", p4
+ktimechange chnget Stimechange
 
 
 /* kactiv_mode for recording
@@ -222,11 +225,19 @@ kmute_status = ( kmute == 1 && changed(kmute) == 1 ? (kmute_status + 1) % 2 :  k
 kmuted port kmute_status, giport
 kfeedback = kol_re * kmuted
 
+
+;printk2 ktimechange
 ;table based looper
 
 kspeedt = kspeed * kspeedy + kspeed_mod
 kol_in port kol_in_, giport
-aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kfeedback, kspeedt, kreset,  klooppause,gimaxDlyTime
+aoutL, aoutR DelaySampl ainL, ainR, kol_in, kol_ti, kfeedback, kspeedt, kreset,  klooppause, ktimechange, gimaxDlyTime
+
+
+if ktimechange != 0 then
+    chnset 0, Stimechange
+endif
+
 
 ;chnset 0, "ol_fixp1"
 Sfixp sprintf  "ol_fixp%d", p4

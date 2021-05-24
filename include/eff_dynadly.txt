@@ -1,0 +1,17 @@
+#define EFF_DYNADLY#
+
+aenv_ follow2 ain * kpar1, 0.5 - 0.499 * kpar1, 0.4 - 0.499 * kpar1
+aenv limit aenv_, 0, 1
+
+if kpar3 < 0.5 then
+	adelay = aenv * kpar2 * 200
+else
+	adelay = (1 - aenv) * kpar2 * 200
+endif
+
+adlyed vdelay3 ain, adelay, 1000
+
+afiltered butlp adlyed, 4500 - 1500 * kpar1
+
+aout CosSinMix ain, afiltered, kpar4
+#

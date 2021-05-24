@@ -1,0 +1,16 @@
+#define EFF_TREMOLO_ENV#
+ifno ftgentmp 0, 123, 16384, 10, 1
+iftfn ftgentmp 0, 123, 3, -2, 138, 139, 140
+ftmorf kpar3  * 2, iftfn, ifno
+
+krms rms ain
+kfrq_ init 0
+;kpar1 freq at min
+;kpar2 freq  at max
+kfrq_ = kpar1 * kpar1 + (kpar2 * kpar2 - kpar1 * kpar1) * krms
+kfrq port kfrq_, 0.02
+amod oscil 0.5, kfrq * 30, ifno
+ares = (amod + 0.5) * ain
+
+aout CosSinMix ain, ares, kpar4
+#

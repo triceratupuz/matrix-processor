@@ -1,8 +1,8 @@
 
 
 
-opcode DelaySampl, aa, aakkkkkki
-ainL, ainR, kinvol, ktime, kfeedback, kspeed, kreset, kpause, imaxtime  xin
+opcode DelaySampl, aa, aakkkkkkki
+ainL, ainR, kinvol, ktime, kfeedback, kspeed, kreset, kpause, ktimechange, imaxtime  xin
 ;setksmps 1
 ;basic buffer with feedback, no time modulation
 ;inputs
@@ -13,12 +13,14 @@ ainL, ainR, kinvol, ktime, kfeedback, kspeed, kreset, kpause, imaxtime  xin
 ;kfeedback; feedback 
 ;kspeed lontre kspeed multiplicator
 ;kreset - reset pointer to buffer start
+;ktimechange - when not 0 allow time change without altering current pointer position
 ;constants 
 ;imaxtime; maximum time of the buffer in seconds
 ;buffers / memory
 ibufL ftgentmp 0, 0, sr * imaxtime, 2, 0
 ibufR ftgentmp 0, 0, sr * imaxtime, 2, 0
 
+ktime_ init 1
 
 ;resetting pointer
 if kreset == 1 && changed(kreset) == 1 then
@@ -33,11 +35,11 @@ endif
 
 koffset init 0
 
-
-
 restart:
 
 aphase, asyncout syncphasor kspeed / ktime, asyncin, i(koffset)
+
+rigoto reend
 
 ;end pause
 if kpause == 0 && changed(kpause) == 1 then
@@ -52,6 +54,21 @@ if kpause == 1 && changed(kpause) == 1 then
     koffset = k(aphase)
     kenv_ = 0
 endif
+
+  
+;timechange quantize action - change loop time preserving pointer position
+if ktimechange > 0 && changed(ktimechange) == 1 then
+    koffset = k(aphase) * ktime / ktime_
+    if koffset > 1 then
+        koffset = 0; if new value outside boundaries reset to begin
+    endif
+    ktime_ = ktime
+    ktimechange = 0
+    reinit restart
+endif
+
+reend:
+ktime_ = ktime
 
 apointw = aphase * ktime * sr
 ;/buffer indexing
